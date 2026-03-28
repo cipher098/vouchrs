@@ -9,6 +9,9 @@ build:
 	go build -o $(BIN) ./$(MAIN)
 
 run:
+	./$(BIN)
+
+dev:
 	go run ./$(MAIN)
 
 test:

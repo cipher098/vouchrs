@@ -116,7 +116,7 @@ func Load() (*Config, error) {
 
 	cfg.App = AppConfig{
 		Env:     getEnv("APP_ENV", "development"),
-		Port:    getEnv("APP_PORT", "8080"),
+		Port:    getEnvAny("APP_PORT", "PORT", "8080"),
 		BaseURL: getEnv("APP_BASE_URL", "http://localhost:8080"),
 	}
 
@@ -212,6 +212,18 @@ func Load() (*Config, error) {
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
+	}
+	return fallback
+}
+
+// getEnvAny returns the value of the first key that is set, falling back to the default.
+func getEnvAny(keys ...string) string {
+	// last element is the fallback
+	fallback := keys[len(keys)-1]
+	for _, key := range keys[:len(keys)-1] {
+		if v := os.Getenv(key); v != "" {
+			return v
+		}
 	}
 	return fallback
 }
