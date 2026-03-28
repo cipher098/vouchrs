@@ -27,11 +27,14 @@ lint:
 tidy:
 	go mod tidy
 
+GOPATH := $(shell go env GOPATH)
+MIGRATE := $(GOPATH)/bin/migrate
+
 migrate-up:
-	go run ./cmd/migrate/main.go up
+	$(MIGRATE) -path migrations -database "$(DB_DSN)" up
 
 migrate-down:
-	go run ./cmd/migrate/main.go down
+	$(MIGRATE) -path migrations -database "$(DB_DSN)" down
 
 docker-up:
 	docker compose up -d postgres redis
