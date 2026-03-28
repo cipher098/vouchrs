@@ -215,11 +215,13 @@ func (r *ListingRepository) MarkSold(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-// OldestLiveInPool returns the oldest LIVE pool listing for a brand+value (FIFO).
+// OldestLiveInPool returns the oldest available pool listing for a brand+value (FIFO).
+// Only returns listings that are LIVE and not locked (lock_buyer_id IS NULL).
 func (r *ListingRepository) OldestLiveInPool(ctx context.Context, brandID uuid.UUID, faceValue float64) (*entity.Listing, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT `+listingCols+` FROM listings
-		WHERE brand_id=$1 AND face_value=$2 AND is_pool=true AND status=$3
+		WHERE brand_id=$1 AND face_value=$2 AND is_pool=true
+		  AND status=$3 AND lock_buyer_id IS NULL
 		ORDER BY created_at ASC LIMIT 1`,
 		brandID, faceValue, entity.ListingStatusLive)
 	l, err := scanListing(row)

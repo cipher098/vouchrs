@@ -82,8 +82,20 @@ func (r *PoolGroupRepository) DecrCount(ctx context.Context, id uuid.UUID) error
 }
 
 func (r *PoolGroupRepository) List(ctx context.Context) ([]*entity.PoolGroup, error) {
-	rows, err := r.db.Query(ctx,
-		`SELECT `+poolCols+` FROM pool_groups WHERE active_count > 0 ORDER BY brand_id, face_value`)
+	// active_count is overwritten with the real-time count of LIVE + unlocked listings
+	// so buyers never see stale or locked-item counts.
+	rows, err := r.db.Query(ctx, `
+		SELECT pg.id, pg.brand_id, pg.face_value, pg.recommended_price, pg.buyer_price,
+		       pg.discount_pct,
+		       COUNT(l.id) FILTER (WHERE l.status = 'LIVE' AND l.lock_buyer_id IS NULL) AS active_count,
+		       pg.avg_sell_time_mins, pg.created_at, pg.updated_at
+		FROM pool_groups pg
+		LEFT JOIN listings l ON l.brand_id = pg.brand_id
+		                     AND l.face_value = pg.face_value
+		                     AND l.is_pool = true
+		GROUP BY pg.id
+		HAVING COUNT(l.id) FILTER (WHERE l.status = 'LIVE' AND l.lock_buyer_id IS NULL) > 0
+		ORDER BY pg.brand_id, pg.face_value`)
 	if err != nil {
 		return nil, err
 	}
