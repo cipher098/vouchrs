@@ -222,6 +222,13 @@ func (s *Service) findOrCreateUser(ctx context.Context, contact string) (*entity
 			user.Phone = contact
 		}
 		if err := s.users.Create(ctx, user); err != nil {
+			// Lost a race — another request created the user first. Fetch it.
+			if errors.Is(err, apperror.ErrConflict) {
+				if isEmail(contact) {
+					return s.users.FindByEmail(ctx, contact)
+				}
+				return s.users.FindByPhone(ctx, contact)
+			}
 			return nil, fmt.Errorf("create user: %w", err)
 		}
 		return user, nil

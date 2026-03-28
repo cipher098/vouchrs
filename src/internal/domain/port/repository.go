@@ -74,6 +74,7 @@ type ListingRepository interface {
 type PoolGroupRepository interface {
 	// Upsert creates or returns the pool group for a brand+value combination.
 	Upsert(ctx context.Context, brandID uuid.UUID, faceValue, buyerPrice, sellerPayout, discountPct float64) (*entity.PoolGroup, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*entity.PoolGroup, error)
 	FindByBrandAndValue(ctx context.Context, brandID uuid.UUID, faceValue float64) (*entity.PoolGroup, error)
 	IncrCount(ctx context.Context, id uuid.UUID) error
 	DecrCount(ctx context.Context, id uuid.UUID) error

@@ -332,4 +332,17 @@ func resultStr(pass bool) string {
 	return "fail"
 }
 
+// InitiateBuyFromPool picks the oldest LIVE listing in the pool (FIFO) and initiates purchase.
+func (s *Service) InitiateBuyFromPool(ctx context.Context, buyerID, poolGroupID uuid.UUID) (*port.InitiateBuyResult, error) {
+	pg, err := s.poolGroups.FindByID(ctx, poolGroupID)
+	if err != nil {
+		return nil, err
+	}
+	listing, err := s.listings.OldestLiveInPool(ctx, pg.BrandID, pg.FaceValue)
+	if err != nil {
+		return nil, apperror.ErrNotFound
+	}
+	return s.InitiateBuy(ctx, buyerID, listing.ID)
+}
+
 var _ port.PurchaseService = (*Service)(nil)

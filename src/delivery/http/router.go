@@ -86,6 +86,7 @@ func NewRouter(
 
 			// Purchase flow
 			r.Post("/listings/{id}/buy", purchaseH.InitiateBuy)
+			r.Post("/pool-groups/{id}/buy", purchaseH.InitiateBuyFromPool)
 			r.Get("/transactions/{id}", purchaseH.GetTransaction)
 			r.Post("/transactions/{id}/confirm", purchaseH.ConfirmRedemption)
 

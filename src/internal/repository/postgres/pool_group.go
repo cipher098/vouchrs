@@ -48,6 +48,16 @@ func (r *PoolGroupRepository) Upsert(ctx context.Context, brandID uuid.UUID, fac
 	return scanPoolGroup(row)
 }
 
+func (r *PoolGroupRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.PoolGroup, error) {
+	row := r.db.QueryRow(ctx,
+		`SELECT `+poolCols+` FROM pool_groups WHERE id=$1`, id)
+	p, err := scanPoolGroup(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, apperror.ErrNotFound
+	}
+	return p, err
+}
+
 func (r *PoolGroupRepository) FindByBrandAndValue(ctx context.Context, brandID uuid.UUID, faceValue float64) (*entity.PoolGroup, error) {
 	row := r.db.QueryRow(ctx,
 		`SELECT `+poolCols+` FROM pool_groups WHERE brand_id=$1 AND face_value=$2`,

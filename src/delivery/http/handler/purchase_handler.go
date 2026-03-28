@@ -89,6 +89,59 @@ func (h *PurchaseHandler) InitiateBuy(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// InitiateBuyFromPool godoc
+//
+//	@Summary      Initiate purchase from pool group (buyer)
+//	@Description  Resolves the oldest LIVE listing in the pool (FIFO) and initiates purchase. Identical flow to InitiateBuy once a listing is selected.
+//	@Tags         purchase
+//	@Accept       json
+//	@Produce      json
+//	@Security     BearerAuth
+//	@Param        id   path string          true "Pool group UUID"
+//	@Param        body body initiateBuyBody false "Optional return URL for PhonePe redirect"
+//	@Success      200 {object} response.Response{data=initiateBuyResponse}
+//	@Failure      400 {object} response.Response "Invalid UUID"
+//	@Failure      401 {object} response.Response
+//	@Failure      403 {object} response.Response "Buyer is banned"
+//	@Failure      404 {object} response.Response "Pool is empty"
+//	@Failure      409 {object} response.Response "Listing locked (LISTING_LOCKED)"
+//	@Failure      422 {object} response.Response "Gate 2 failed (CARD_TAMPERED)"
+//	@Router       /api/v1/pool-groups/{id}/buy [post]
+func (h *PurchaseHandler) InitiateBuyFromPool(w http.ResponseWriter, r *http.Request) {
+	buyerID, ok := r.Context().Value(contextkey.UserID).(uuid.UUID)
+	if !ok {
+		response.Error(w, apperror.ErrUnauthorized)
+		return
+	}
+	poolGroupID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, apperror.New(apperror.ErrBadRequest, "invalid pool group id"))
+		return
+	}
+
+	var body initiateBuyBody
+	_ = json.NewDecoder(r.Body).Decode(&body)
+
+	result, err := h.purchase.InitiateBuyFromPool(r.Context(), buyerID, poolGroupID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	returnURL := body.ReturnURL
+	if returnURL == "" {
+		returnURL = result.ReturnURL
+	}
+
+	response.JSON(w, http.StatusOK, map[string]interface{}{
+		"transaction_id":  result.Transaction.ID,
+		"payment_url":     result.PaymentURL,
+		"amount":          result.Transaction.BuyerAmount,
+		"lock_expires_at": result.LockExpiresAt,
+		"return_url":      returnURL,
+	})
+}
+
 // GetTransaction godoc
 //
 //	@Summary      Get transaction details

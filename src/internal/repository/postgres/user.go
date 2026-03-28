@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gothi/vouchrs/src/internal/domain/apperror"
 	"github.com/gothi/vouchrs/src/internal/domain/entity"
@@ -38,6 +39,10 @@ func (r *UserRepository) Create(ctx context.Context, u *entity.User) error {
 		u.ListingCountToday, u.ListingCountDate, u.UPIID, u.CreatedAt, u.UpdatedAt,
 	)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" { // unique_violation
+			return apperror.ErrConflict
+		}
 		return fmt.Errorf("create user: %w", err)
 	}
 	return nil

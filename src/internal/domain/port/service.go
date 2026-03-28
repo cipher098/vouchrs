@@ -79,6 +79,9 @@ type PurchaseService interface {
 	// InitiateBuy runs Gate 2, locks the listing, creates a transaction,
 	// and returns a PhonePe payment URL.
 	InitiateBuy(ctx context.Context, buyerID, listingID uuid.UUID) (*InitiateBuyResult, error)
+	// InitiateBuyFromPool resolves the oldest LIVE listing in the pool group (FIFO)
+	// and delegates to InitiateBuy. Returns ErrNotFound if the pool is empty.
+	InitiateBuyFromPool(ctx context.Context, buyerID, poolGroupID uuid.UUID) (*InitiateBuyResult, error)
 	// HandlePaymentSuccess is called by the webhook handler on successful payment.
 	// It marks the transaction paid and sends the card code by email.
 	HandlePaymentSuccess(ctx context.Context, merchantTransactionID string) error

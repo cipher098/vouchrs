@@ -113,6 +113,13 @@ func (m *PoolGroupRepo) Upsert(ctx context.Context, brandID uuid.UUID, faceValue
 	}
 	return args.Get(0).(*entity.PoolGroup), args.Error(1)
 }
+func (m *PoolGroupRepo) FindByID(ctx context.Context, id uuid.UUID) (*entity.PoolGroup, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.PoolGroup), args.Error(1)
+}
 func (m *PoolGroupRepo) FindByBrandAndValue(ctx context.Context, brandID uuid.UUID, faceValue float64) (*entity.PoolGroup, error) {
 	args := m.Called(ctx, brandID, faceValue)
 	if args.Get(0) == nil {
