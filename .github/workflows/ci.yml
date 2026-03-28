@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: cardswap
+          POSTGRES_PASSWORD: cardswap
+          POSTGRES_DB: cardswap_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_DSN: postgres://cardswap:cardswap@localhost:5432/cardswap_test?sslmode=disable
+      REDIS_ADDR: localhost:6379
+      JWT_ACCESS_SECRET: test-access-secret-32-chars-abcde
+      JWT_REFRESH_SECRET: test-refresh-secret-32-chars-abcd
+      CIPHER_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      R2_ACCOUNT_ID: test
+      R2_ACCESS_KEY_ID: test
+      R2_ACCESS_KEY_SECRET: test
+      R2_PUBLIC_URL: https://test.r2.dev
+      FAST2SMS_API_KEY: test
+      RESEND_API_KEY: test
+      PHONEPE_MERCHANT_ID: test
+      PHONEPE_SALT_KEY: test
+      RAZORPAY_KEY_ID: test
+      RAZORPAY_KEY_SECRET: test
+      RAZORPAY_ACCOUNT_NUMBER: test
+      GOOGLE_CLIENT_ID: test
+      GOOGLE_CLIENT_SECRET: test
+      GOOGLE_REDIRECT_URL: http://localhost:8080/callback
+      ADMIN_EMAILS: admin@test.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Install swag
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+
+      - name: Check API docs are up to date
+        run: |
+          swag init -g src/cmd/api/main.go -o src/docs --parseDependency --parseInternal
+          git diff --exit-code src/docs || (echo "ERROR: API docs are stale. Run 'make docs' and commit." && exit 1)
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+      - name: Run migrations
+        run: |
+          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+          migrate -path ./migrations -database "$DB_DSN" up
+
+      - name: Run tests
+        run: go test ./... -race -count=1 -coverprofile=coverage.out
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage.out
+        continue-on-error: true
+
+      - name: Build
+        run: go build -o /dev/null ./src/cmd/api/main.go
