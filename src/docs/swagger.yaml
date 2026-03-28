@@ -1591,6 +1591,98 @@ paths:
       summary: Browse marketplace
       tags:
       - marketplace
+  /api/v1/pool-groups/{id}:
+    get:
+      description: Returns pool group details including buyer price, discount, and
+        active listing count. Use this to show the detail page for a Vouchrs pool
+        listing.
+      parameters:
+      - description: Pool group UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.PoolGroup'
+              type: object
+        "400":
+          description: Invalid UUID
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+      summary: Get a pool group by ID
+      tags:
+      - marketplace
+  /api/v1/pool-groups/{id}/buy:
+    post:
+      consumes:
+      - application/json
+      description: Resolves the oldest LIVE listing in the pool (FIFO) and initiates
+        purchase. Identical flow to InitiateBuy once a listing is selected.
+      parameters:
+      - description: Pool group UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Optional return URL for PhonePe redirect
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/src_delivery_http_handler.initiateBuyBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/src_delivery_http_handler.initiateBuyResponse'
+              type: object
+        "400":
+          description: Invalid UUID
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+        "403":
+          description: Buyer is banned
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+        "404":
+          description: Pool is empty
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+        "409":
+          description: Listing locked (LISTING_LOCKED)
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+        "422":
+          description: Gate 2 failed (CARD_TAMPERED)
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Initiate purchase from pool group (buyer)
+      tags:
+      - purchase
   /api/v1/transactions/{id}:
     get:
       description: Returns a transaction. Only the buyer or seller of that transaction

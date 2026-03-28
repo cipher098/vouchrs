@@ -1722,6 +1722,152 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/pool-groups/{id}": {
+            "get": {
+                "description": "Returns pool group details including buyer price, discount, and active listing count. Use this to show the detail page for a Vouchrs pool listing.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "marketplace"
+                ],
+                "summary": "Get a pool group by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pool group UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.PoolGroup"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pool-groups/{id}/buy": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Resolves the oldest LIVE listing in the pool (FIFO) and initiates purchase. Identical flow to InitiateBuy once a listing is selected.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "purchase"
+                ],
+                "summary": "Initiate purchase from pool group (buyer)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pool group UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Optional return URL for PhonePe redirect",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/src_delivery_http_handler.initiateBuyBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/src_delivery_http_handler.initiateBuyResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid UUID",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Buyer is banned",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Pool is empty",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Listing locked (LISTING_LOCKED)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "Gate 2 failed (CARD_TAMPERED)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/transactions/{id}": {
             "get": {
                 "security": [

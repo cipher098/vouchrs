@@ -64,6 +64,8 @@ type ListingService interface {
 	GetMarketplace(ctx context.Context, f MarketplaceFilter) (*MarketplaceResult, error)
 	// GetRecommendedPrice returns the platform-recommended pricing for a given brand+face value.
 	GetRecommendedPrice(ctx context.Context, brandID uuid.UUID, faceValue float64) (*RecommendedPriceResult, error)
+	// GetPoolGroup returns a single pool group by ID.
+	GetPoolGroup(ctx context.Context, id uuid.UUID) (*entity.PoolGroup, error)
 }
 
 // --- Purchase ---

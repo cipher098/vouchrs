@@ -56,6 +56,7 @@ func NewRouter(
 		r.Get("/marketplace", listingH.Marketplace)
 		r.Get("/listings/recommended-price", listingH.RecommendedPrice)
 		r.Get("/listings/{id}", listingH.GetByID)
+		r.Get("/pool-groups/{id}", listingH.GetPoolGroup)
 
 		// --- Auth ---
 		r.Route("/auth", func(r chi.Router) {

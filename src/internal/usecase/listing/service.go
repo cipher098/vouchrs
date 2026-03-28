@@ -216,6 +216,10 @@ func (s *Service) GetMarketplace(ctx context.Context, f port.MarketplaceFilter) 
 	}, nil
 }
 
+func (s *Service) GetPoolGroup(ctx context.Context, id uuid.UUID) (*entity.PoolGroup, error) {
+	return s.poolGroups.FindByID(ctx, id)
+}
+
 // GetRecommendedPrice returns the platform-recommended pricing breakdown for a brand+face value.
 func (s *Service) GetRecommendedPrice(ctx context.Context, brandID uuid.UUID, faceValue float64) (*port.RecommendedPriceResult, error) {
 	if _, err := s.brands.FindByID(ctx, brandID); err != nil {

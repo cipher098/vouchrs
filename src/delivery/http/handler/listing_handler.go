@@ -140,6 +140,31 @@ func (h *ListingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, map[string]string{"message": "listing cancelled"})
 }
 
+// GetPoolGroup godoc
+//
+//	@Summary      Get a pool group by ID
+//	@Description  Returns pool group details including buyer price, discount, and active listing count. Use this to show the detail page for a Vouchrs pool listing.
+//	@Tags         marketplace
+//	@Produce      json
+//	@Param        id  path string true "Pool group UUID"
+//	@Success      200 {object} response.Response{data=entity.PoolGroup}
+//	@Failure      400 {object} response.Response "Invalid UUID"
+//	@Failure      404 {object} response.Response
+//	@Router       /api/v1/pool-groups/{id} [get]
+func (h *ListingHandler) GetPoolGroup(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, apperror.New(apperror.ErrBadRequest, "invalid pool group id"))
+		return
+	}
+	pg, err := h.listing.GetPoolGroup(r.Context(), id)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, pg)
+}
+
 // RecommendedPrice godoc
 //
 //	@Summary      Get recommended listing price
