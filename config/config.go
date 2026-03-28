@@ -101,6 +101,7 @@ type QwikcilverConfig struct {
 type OTPConfig struct {
 	Length     int
 	TTLMinutes int
+	DevMode    bool // if true, print OTP to logs instead of sending via SMS/email
 }
 
 type AsynqConfig struct {
@@ -193,9 +194,11 @@ func Load() (*Config, error) {
 
 	otpLen, _ := strconv.Atoi(getEnv("OTP_LENGTH", "6"))
 	otpTTL, _ := strconv.Atoi(getEnv("OTP_TTL_MINUTES", "10"))
+	otpDevMode, _ := strconv.ParseBool(getEnv("OTP_DEV_MODE", "false"))
 	cfg.OTP = OTPConfig{
 		Length:     otpLen,
 		TTLMinutes: otpTTL,
+		DevMode:    otpDevMode,
 	}
 
 	concurrency, _ := strconv.Atoi(getEnv("ASYNQ_CONCURRENCY", "10"))

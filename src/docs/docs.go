@@ -2740,7 +2740,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
 	BasePath:         "/",
-	Schemes:          []string{"https", "http"},
+	Schemes:          []string{"http", "https"},
 	Title:            "Vouchrs API",
 	Description:      "P2P gift card exchange marketplace. Card codes are AES-256 encrypted at rest and **never returned in API responses** — they are delivered to the buyer's registered email only.",
 	InfoInstanceName: "swagger",

@@ -23,15 +23,16 @@ const (
 )
 
 type Service struct {
-	users    port.UserRepository
-	tokens   port.TokenService
-	cache    port.CacheService
-	sms      port.SMSService
-	email    port.EmailService
-	oauth    port.OAuthService
-	otpLen   int
+	users       port.UserRepository
+	tokens      port.TokenService
+	cache       port.CacheService
+	sms         port.SMSService
+	email       port.EmailService
+	oauth       port.OAuthService
+	otpLen      int
+	otpDevMode  bool
 	adminEmails []string
-	logger   *slog.Logger
+	logger      *slog.Logger
 }
 
 func NewService(
@@ -42,6 +43,7 @@ func NewService(
 	email port.EmailService,
 	oauth port.OAuthService,
 	otpLen int,
+	otpDevMode bool,
 	adminEmails []string,
 	logger *slog.Logger,
 ) port.AuthService {
@@ -53,6 +55,7 @@ func NewService(
 		email:       email,
 		oauth:       oauth,
 		otpLen:      otpLen,
+		otpDevMode:  otpDevMode,
 		adminEmails: adminEmails,
 		logger:      logger,
 	}
@@ -81,6 +84,12 @@ func (s *Service) RequestOTP(ctx context.Context, contact string) error {
 	// Increment attempt counter
 	newCount := attempts + 1
 	_ = s.cache.Set(ctx, attemptsKey, newCount, otpAttemptsWindow)
+
+	// In dev mode, print OTP to logs instead of sending externally.
+	if s.otpDevMode {
+		s.logger.Info("DEV MODE — OTP generated", "contact", contact, "otp", otp)
+		return nil
+	}
 
 	// Send via appropriate channel
 	if isEmail(contact) {

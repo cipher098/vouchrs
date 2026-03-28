@@ -8,7 +8,7 @@
 //
 //	@host       localhost:8080
 //	@BasePath   /
-//	@schemes    https http
+//	@schemes    http https
 //
 //	@securityDefinitions.apikey BearerAuth
 //	@in         header
@@ -63,6 +63,7 @@ func main() {
 	}
 
 	log := logger.New(cfg.App.Env)
+	slog.SetDefault(log)
 
 	// --- Infrastructure ---
 
@@ -133,7 +134,7 @@ func main() {
 	authSvc := auth.NewService(
 		userRepo, tokenSvc, cacheService,
 		smsSvc, emailSvc, oauthSvc,
-		cfg.OTP.Length, cfg.Admin.Emails, log,
+		cfg.OTP.Length, cfg.OTP.DevMode, cfg.Admin.Emails, log,
 	)
 
 	listingSvc := listing.NewService(

@@ -1740,8 +1740,8 @@ paths:
       tags:
       - webhooks
 schemes:
-- https
 - http
+- https
 securityDefinitions:
   BearerAuth:
     description: 'JWT access token. Format: `Bearer <token>`'

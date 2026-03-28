@@ -21,8 +21,27 @@ type fast2smsClient struct {
 }
 
 type fast2smsResponse struct {
-	Return  bool     `json:"return"`
-	Message []string `json:"message"`
+	Return  bool            `json:"return"`
+	Message flexibleMessage `json:"message"`
+}
+
+// flexibleMessage handles Fast2SMS returning message as either a string or []string.
+type flexibleMessage []string
+
+func (m *flexibleMessage) UnmarshalJSON(b []byte) error {
+	// try array first
+	var arr []string
+	if err := json.Unmarshal(b, &arr); err == nil {
+		*m = arr
+		return nil
+	}
+	// fall back to single string
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	*m = []string{s}
+	return nil
 }
 
 // NewFast2SMS creates an SMS service backed by fast2sms.

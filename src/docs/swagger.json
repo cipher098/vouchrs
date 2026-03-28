@@ -1,7 +1,7 @@
 {
     "schemes": [
-        "https",
-        "http"
+        "http",
+        "https"
     ],
     "swagger": "2.0",
     "info": {

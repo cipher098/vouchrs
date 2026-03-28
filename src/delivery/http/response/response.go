@@ -3,6 +3,7 @@ package response
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gothi/vouchrs/src/internal/domain/apperror"
@@ -53,6 +54,9 @@ func Paginated(w http.ResponseWriter, status int, data interface{}, meta paginat
 // Error maps a domain error to an HTTP status code and writes the response.
 func Error(w http.ResponseWriter, err error) {
 	status, code := statusFromError(err)
+	if status == http.StatusInternalServerError {
+		slog.Error("unhandled error", "error", err)
+	}
 	msg := err.Error()
 
 	var appErr *apperror.AppError
