@@ -97,6 +97,7 @@ type AdminConfig struct {
 type QwikcilverConfig struct {
 	TimeoutSeconds int
 	Headless       bool
+	DevMode        bool // if true, skip Chrome verification and always return valid
 }
 
 type OTPConfig struct {
@@ -189,9 +190,11 @@ func Load() (*Config, error) {
 
 	qTimeout, _ := strconv.Atoi(getEnv("QWIKCILVER_TIMEOUT_SECONDS", "30"))
 	qHeadless, _ := strconv.ParseBool(getEnv("QWIKCILVER_HEADLESS", "true"))
+	qDevMode, _ := strconv.ParseBool(getEnv("VERIFICATION_DEV_MODE", "false"))
 	cfg.Qwikcilver = QwikcilverConfig{
 		TimeoutSeconds: qTimeout,
 		Headless:       qHeadless,
+		DevMode:        qDevMode,
 	}
 
 	otpLen, _ := strconv.Atoi(getEnv("OTP_LENGTH", "6"))

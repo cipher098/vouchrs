@@ -44,6 +44,7 @@ import (
 	smspkg "github.com/gothi/vouchrs/src/external/sms"
 	"github.com/gothi/vouchrs/src/external/token"
 	"github.com/gothi/vouchrs/src/external/verification"
+	"github.com/gothi/vouchrs/src/internal/domain/port"
 	repoPkg "github.com/gothi/vouchrs/src/internal/repository/postgres"
 	"github.com/gothi/vouchrs/src/internal/usecase/admin"
 	"github.com/gothi/vouchrs/src/internal/usecase/auth"
@@ -147,9 +148,14 @@ func main() {
 		cfg.Razorpay.KeyID, cfg.Razorpay.KeySecret, cfg.Razorpay.AccountNumber,
 	)
 
-	verifySvc := verification.NewQwikcilverVerifier(
-		cfg.Qwikcilver.TimeoutSeconds, cfg.Qwikcilver.Headless, log,
-	)
+	var verifySvc port.VerificationService
+	if cfg.Qwikcilver.DevMode {
+		verifySvc = verification.NewMockVerifier(log)
+	} else {
+		verifySvc = verification.NewQwikcilverVerifier(
+			cfg.Qwikcilver.TimeoutSeconds, cfg.Qwikcilver.Headless, log,
+		)
+	}
 
 	jobQueue, asynqClient := queue.NewAsynqJobQueue(asynqOpt)
 	defer asynqClient.Close()
