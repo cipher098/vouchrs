@@ -24,14 +24,9 @@ type asynqJobQueue struct {
 }
 
 // NewAsynqJobQueue creates a Redis-backed job queue using asynq.
-func NewAsynqJobQueue(redisAddr, redisPassword string, redisDB int) (port.JobQueue, *asynq.Client) {
-	opt := asynq.RedisClientOpt{
-		Addr:     redisAddr,
-		Password: redisPassword,
-		DB:       redisDB,
-	}
-	client := asynq.NewClient(opt)
-	inspector := asynq.NewInspector(opt)
+func NewAsynqJobQueue(connOpt asynq.RedisConnOpt) (port.JobQueue, *asynq.Client) {
+	client := asynq.NewClient(connOpt)
+	inspector := asynq.NewInspector(connOpt)
 	return &asynqJobQueue{client: client, inspector: inspector}, client
 }
 

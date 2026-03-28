@@ -37,6 +37,7 @@ type DBConfig struct {
 }
 
 type RedisConfig struct {
+	URL      string // takes precedence when set (e.g. rediss://... for Upstash)
 	Addr     string
 	Password string
 	DB       int
@@ -127,6 +128,7 @@ func Load() (*Config, error) {
 
 	redisDB, _ := strconv.Atoi(getEnv("REDIS_DB", "0"))
 	cfg.Redis = RedisConfig{
+		URL:      os.Getenv("REDIS_URL"),
 		Addr:     getEnv("REDIS_ADDR", "localhost:6379"),
 		Password: os.Getenv("REDIS_PASSWORD"),
 		DB:       redisDB,

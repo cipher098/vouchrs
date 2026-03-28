@@ -17,12 +17,8 @@ type redisCache struct {
 }
 
 // NewRedisCache creates a Redis-backed CacheService.
-func NewRedisCache(addr, password string, db int) (port.CacheService, *redis.Client) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
-	})
+func NewRedisCache(opts *redis.Options) (port.CacheService, *redis.Client) {
+	client := redis.NewClient(opts)
 	return &redisCache{client: client}, client
 }
 

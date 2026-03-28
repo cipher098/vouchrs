@@ -23,18 +23,15 @@ type Worker struct {
 }
 
 func New(
-	redisAddr, redisPassword string,
-	redisDB, concurrency int,
+	connOpt asynq.RedisConnOpt,
+	concurrency int,
 	requests port.RequestService,
 	purchase port.PurchaseService,
 	payout port.PayoutUsecase,
 	listings port.ListingRepository,
 	logger *slog.Logger,
 ) *Worker {
-	srv := asynq.NewServer(
-		asynq.RedisClientOpt{Addr: redisAddr, Password: redisPassword, DB: redisDB},
-		asynq.Config{Concurrency: concurrency},
-	)
+	srv := asynq.NewServer(connOpt, asynq.Config{Concurrency: concurrency})
 	return &Worker{
 		server:   srv,
 		requests: requests,

@@ -18,13 +18,16 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/gothi/vouchrs/config"
 	deliveryhttp "github.com/gothi/vouchrs/src/delivery/http"
@@ -52,6 +55,39 @@ import (
 	"github.com/gothi/vouchrs/src/pkg/logger"
 )
 
+// buildRedisOpts returns go-redis options and an asynq connection option.
+// If REDIS_URL is set it is parsed (supports rediss:// TLS for Upstash).
+// Otherwise falls back to REDIS_ADDR / REDIS_PASSWORD / REDIS_DB.
+func buildRedisOpts(cfg config.RedisConfig) (*redis.Options, asynq.RedisConnOpt) {
+	if cfg.URL != "" {
+		opts, err := redis.ParseURL(cfg.URL)
+		if err != nil {
+			panic("invalid REDIS_URL: " + err.Error())
+		}
+		asynqOpt := asynq.RedisClientOpt{
+			Addr:     opts.Addr,
+			Username: opts.Username,
+			Password: opts.Password,
+			DB:       opts.DB,
+		}
+		if opts.TLSConfig != nil {
+			asynqOpt.TLSConfig = &tls.Config{InsecureSkipVerify: false}
+		}
+		return opts, asynqOpt
+	}
+	opts := &redis.Options{
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.DB,
+	}
+	asynqOpt := asynq.RedisClientOpt{
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.DB,
+	}
+	return opts, asynqOpt
+}
+
 func main() {
 	// Load .env in non-production environments
 	_ = godotenv.Load()
@@ -76,7 +112,8 @@ func main() {
 	}
 	defer db.Close()
 
-	cacheService, redisClient := cache.NewRedisCache(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
+	redisOpts, asynqOpt := buildRedisOpts(cfg.Redis)
+	cacheService, redisClient := cache.NewRedisCache(redisOpts)
 	if err := redisClient.Ping(ctx).Err(); err != nil {
 		log.Error("connect to redis", "error", err)
 		os.Exit(1)
@@ -114,7 +151,7 @@ func main() {
 		cfg.Qwikcilver.TimeoutSeconds, cfg.Qwikcilver.Headless, log,
 	)
 
-	jobQueue, asynqClient := queue.NewAsynqJobQueue(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
+	jobQueue, asynqClient := queue.NewAsynqJobQueue(asynqOpt)
 	defer asynqClient.Close()
 
 	// --- Repositories ---
@@ -197,7 +234,7 @@ func main() {
 	// --- Background worker (same process) ---
 
 	w := worker.New(
-		cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB,
+		asynqOpt,
 		cfg.Asynq.Concurrency,
 		requestSvc, purchaseSvc, payoutUsecaseSvc,
 		listingRepo, log,
