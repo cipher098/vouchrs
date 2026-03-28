@@ -1,10 +1,10 @@
-// CardSwap India API
+// Vouchrs API
 //
-//	@title          CardSwap India API
+//	@title          Vouchrs API
 //	@version        1.0
 //	@description    P2P gift card exchange marketplace. Card codes are AES-256 encrypted at rest and **never returned in API responses** — they are delivered to the buyer's registered email only.
-//	@contact.name   CardSwap Support
-//	@contact.email  support@cardswap.in
+//	@contact.name   Vouchrs Support
+//	@contact.email  support@vouchrs.in
 //
 //	@host       localhost:8080
 //	@BasePath   /
@@ -168,6 +168,7 @@ func main() {
 	// --- Handlers ---
 
 	authHandler := handler.NewAuthHandler(authSvc)
+	brandHandler := handler.NewBrandHandler(brandRepo)
 	listingHandler := handler.NewListingHandler(listingSvc)
 	purchaseHandler := handler.NewPurchaseHandler(purchaseSvc, paymentGW)
 	requestHandler := handler.NewRequestHandler(requestSvc)
@@ -179,6 +180,7 @@ func main() {
 	router := deliveryhttp.NewRouter(
 		tokenSvc,
 		authHandler,
+		brandHandler,
 		listingHandler,
 		purchaseHandler,
 		requestHandler,

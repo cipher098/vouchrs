@@ -94,6 +94,34 @@ func (r *BrandRepository) ListActive(ctx context.Context) ([]*entity.Brand, erro
 	return brands, rows.Err()
 }
 
+func (r *BrandRepository) ListWithCount(ctx context.Context) ([]*entity.Brand, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT b.id, b.name, b.slug, b.logo_url, b.color, b.verification_source, b.status, b.created_at, b.updated_at,
+		       COUNT(l.id) FILTER (WHERE l.status = 'LIVE') AS listing_count
+		FROM brands b
+		LEFT JOIN listings l ON l.brand_id = b.id
+		WHERE b.status = $1
+		GROUP BY b.id
+		ORDER BY b.name`, entity.BrandStatusActive)
+	if err != nil {
+		return nil, fmt.Errorf("list brands with count: %w", err)
+	}
+	defer rows.Close()
+
+	var brands []*entity.Brand
+	for rows.Next() {
+		b := &entity.Brand{}
+		if err := rows.Scan(
+			&b.ID, &b.Name, &b.Slug, &b.LogoURL, &b.Color, &b.VerificationSource, &b.Status, &b.CreatedAt, &b.UpdatedAt,
+			&b.ListingCount,
+		); err != nil {
+			return nil, fmt.Errorf("scan brand with count: %w", err)
+		}
+		brands = append(brands, b)
+	}
+	return brands, rows.Err()
+}
+
 func (r *BrandRepository) Update(ctx context.Context, b *entity.Brand) error {
 	b.UpdatedAt = time.Now().UTC()
 	_, err := r.db.Exec(ctx, `

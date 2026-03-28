@@ -94,6 +94,10 @@ func (m *BrandRepo) ListActive(ctx context.Context) ([]*entity.Brand, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]*entity.Brand), args.Error(1)
 }
+func (m *BrandRepo) ListWithCount(ctx context.Context) ([]*entity.Brand, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*entity.Brand), args.Error(1)
+}
 func (m *BrandRepo) Update(ctx context.Context, b *entity.Brand) error {
 	return m.Called(ctx, b).Error(0)
 }

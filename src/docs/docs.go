@@ -10,8 +10,8 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {
-            "name": "CardSwap Support",
-            "email": "support@cardswap.in"
+            "name": "Vouchrs Support",
+            "email": "support@vouchrs.in"
         },
         "version": "{{.Version}}"
     },
@@ -845,6 +845,47 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/brands": {
+            "get": {
+                "description": "Returns all active brands with their current live listing count. Used by the frontend for the brand grid and filter chips.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brands"
+                ],
+                "summary": "List active brands",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.Brand"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/buy-requests": {
             "get": {
                 "security": [
@@ -1326,6 +1367,77 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/listings/recommended-price": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the platform-recommended pricing breakdown for a given brand and face value. Use this before submitting POST /api/v1/listings to show the seller what they will receive.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "listings"
+                ],
+                "summary": "Get recommended listing price",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Brand UUID",
+                        "name": "brand_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Card face value in INR",
+                        "name": "face_value",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_port.RecommendedPriceResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid params",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Brand not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/listings/{id}": {
             "get": {
                 "description": "Returns listing details. The code_encrypted and code_hash fields are always stripped.",
@@ -1459,6 +1571,9 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Runs Gate 2 re-verification, atomically locks the listing for 10 minutes, creates a pending transaction, and returns a PhonePe payment URL. The buyer must complete payment before lock_expires_at or the listing is released. **The card code is never returned here** — it is sent to the buyer's email after payment succeeds.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1473,6 +1588,14 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Optional return URL for PhonePe redirect",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/src_delivery_http_handler.initiateBuyBody"
+                        }
                     }
                 ],
                 "responses": {
@@ -1529,7 +1652,7 @@ const docTemplate = `{
         },
         "/api/v1/marketplace": {
             "get": {
-                "description": "Returns CardSwap pool groups (aggregated inventory) at the top and individual seller listings below. Pool groups show the best available price for each brand+denomination combination.",
+                "description": "Returns Vouchrs pool groups (aggregated inventory) at the top and individual seller listings below. Pool groups show the best available price for each brand+denomination combination.",
                 "produces": [
                     "application/json"
                 ],
@@ -1867,37 +1990,86 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_gothi_vouchrs_src_internal_domain_entity.BuyRequest": {
+        "github_com_gothi_vouchrs_src_internal_domain_entity.Brand": {
             "type": "object",
             "properties": {
-                "alertedCount": {
-                    "type": "integer"
-                },
-                "brandID": {
+                "color": {
                     "type": "string"
                 },
-                "createdAt": {
-                    "type": "string"
-                },
-                "expiresAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "maxPrice": {
+                "listing_count": {
+                    "description": "ListingCount is populated by ListWithCount — not a DB column.",
+                    "type": "integer"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.BrandStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "verification_source": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_gothi_vouchrs_src_internal_domain_entity.BrandStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "testing",
+                "inactive"
+            ],
+            "x-enum-varnames": [
+                "BrandStatusActive",
+                "BrandStatusTesting",
+                "BrandStatusInactive"
+            ]
+        },
+        "github_com_gothi_vouchrs_src_internal_domain_entity.BuyRequest": {
+            "type": "object",
+            "properties": {
+                "alerted_count": {
+                    "type": "integer"
+                },
+                "brand_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "max_price": {
                     "type": "number"
                 },
-                "maxValue": {
+                "max_value": {
                     "type": "number"
                 },
-                "minValue": {
+                "min_value": {
                     "type": "number"
                 },
                 "status": {
                     "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.BuyRequestStatus"
                 },
-                "userID": {
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -1920,20 +2092,19 @@ const docTemplate = `{
         "github_com_gothi_vouchrs_src_internal_domain_entity.CardRequest": {
             "type": "object",
             "properties": {
-                "adminNotes": {
+                "admin_notes": {
                     "type": "string"
                 },
                 "brand": {
-                    "description": "free-text brand name",
                     "type": "string"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
-                "desiredValue": {
+                "desired_value": {
                     "type": "number"
                 },
-                "fulfilledAt": {
+                "fulfilled_at": {
                     "type": "string"
                 },
                 "id": {
@@ -1942,13 +2113,13 @@ const docTemplate = `{
                 "status": {
                     "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.CardRequestStatus"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 },
                 "urgency": {
                     "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.CardRequestUrgency"
                 },
-                "userID": {
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -1986,28 +2157,28 @@ const docTemplate = `{
         "github_com_gothi_vouchrs_src_internal_domain_entity.FraudFlag": {
             "type": "object",
             "properties": {
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "isResolved": {
+                "is_resolved": {
                     "type": "boolean"
                 },
-                "listingID": {
+                "listing_id": {
                     "type": "string"
                 },
                 "reason": {
                     "type": "string"
                 },
-                "resolvedAt": {
+                "resolved_at": {
                     "type": "string"
                 },
                 "severity": {
                     "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.FraudSeverity"
                 },
-                "userID": {
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -2028,66 +2199,58 @@ const docTemplate = `{
         "github_com_gothi_vouchrs_src_internal_domain_entity.Listing": {
             "type": "object",
             "properties": {
-                "brandID": {
+                "brand_id": {
                     "type": "string"
                 },
-                "buyerPrice": {
-                    "description": "what buyer pays",
+                "buyer_price": {
                     "type": "number"
                 },
-                "codeEncrypted": {
-                    "description": "AES-256-GCM encrypted",
+                "code_encrypted": {
                     "type": "string"
                 },
-                "codeHash": {
-                    "description": "SHA-256 for duplicate check",
+                "code_hash": {
                     "type": "string"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
-                "discountPct": {
-                    "description": "e.g. 9.0 for 9% off",
+                "discount_pct": {
                     "type": "number"
                 },
-                "faceValue": {
-                    "description": "e.g. 1000.00",
+                "face_value": {
                     "type": "number"
                 },
-                "gate1At": {
+                "gate1_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "isPool": {
-                    "description": "true = CardSwap pool",
+                "is_pool": {
                     "type": "boolean"
                 },
-                "lockBuyerID": {
+                "lock_buyer_id": {
                     "type": "string"
                 },
-                "lockExpiresAt": {
+                "lock_expires_at": {
                     "type": "string"
                 },
-                "sellerID": {
+                "seller_id": {
                     "type": "string"
                 },
-                "sellerPayout": {
-                    "description": "what seller receives",
+                "seller_payout": {
                     "type": "number"
                 },
-                "soldAt": {
+                "sold_at": {
                     "type": "string"
                 },
                 "status": {
                     "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.ListingStatus"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 },
-                "verifiedBalance": {
-                    "description": "balance at Gate 1",
+                "verified_balance": {
                     "type": "number"
                 }
             }
@@ -2114,36 +2277,34 @@ const docTemplate = `{
         "github_com_gothi_vouchrs_src_internal_domain_entity.PoolGroup": {
             "type": "object",
             "properties": {
-                "activeCount": {
-                    "description": "LIVE listings in pool",
+                "active_count": {
                     "type": "integer"
                 },
-                "avgSellTimeMins": {
+                "avg_sell_time_mins": {
                     "type": "number"
                 },
-                "brandID": {
+                "brand_id": {
                     "type": "string"
                 },
-                "buyerPrice": {
+                "buyer_price": {
                     "type": "number"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
-                "discountPct": {
+                "discount_pct": {
                     "type": "number"
                 },
-                "faceValue": {
+                "face_value": {
                     "type": "number"
                 },
                 "id": {
                     "type": "string"
                 },
-                "recommendedPrice": {
-                    "description": "seller receives this",
+                "recommended_price": {
                     "type": "number"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -2151,52 +2312,49 @@ const docTemplate = `{
         "github_com_gothi_vouchrs_src_internal_domain_entity.Transaction": {
             "type": "object",
             "properties": {
-                "buyerAmount": {
+                "buyer_amount": {
                     "type": "number"
                 },
-                "buyerID": {
+                "buyer_id": {
                     "type": "string"
                 },
-                "codeRevealedAt": {
-                    "description": "when email was sent",
+                "code_revealed_at": {
                     "type": "string"
                 },
-                "completedAt": {
+                "completed_at": {
                     "type": "string"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "listingID": {
+                "listing_id": {
                     "type": "string"
                 },
-                "lockStartedAt": {
+                "lock_started_at": {
                     "type": "string"
                 },
-                "paidAt": {
+                "paid_at": {
                     "type": "string"
                 },
-                "paymentRef": {
-                    "description": "PG merchant transaction ID",
+                "payment_ref": {
                     "type": "string"
                 },
-                "payoutRef": {
-                    "description": "Razorpay payout ID",
+                "payout_ref": {
                     "type": "string"
                 },
-                "sellerID": {
+                "seller_id": {
                     "type": "string"
                 },
-                "sellerPayout": {
+                "seller_payout": {
                     "type": "number"
                 },
                 "status": {
                     "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.TransactionStatus"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -2290,6 +2448,29 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.CardRequest"
                     }
+                }
+            }
+        },
+        "github_com_gothi_vouchrs_src_internal_domain_port.RecommendedPriceResult": {
+            "type": "object",
+            "properties": {
+                "avg_sell_time_mins": {
+                    "type": "number"
+                },
+                "buyer_price": {
+                    "type": "number"
+                },
+                "platform_fee_per_side": {
+                    "type": "number"
+                },
+                "recommended_discount_pct": {
+                    "type": "number"
+                },
+                "seller_payout": {
+                    "type": "number"
+                },
+                "seller_price": {
+                    "type": "number"
                 }
             }
         },
@@ -2407,6 +2588,15 @@ const docTemplate = `{
                 }
             }
         },
+        "src_delivery_http_handler.initiateBuyBody": {
+            "type": "object",
+            "properties": {
+                "return_url": {
+                    "type": "string",
+                    "example": "https://vouchrs.in/purchase/confirm?txn_id=123"
+                }
+            }
+        },
         "src_delivery_http_handler.initiateBuyResponse": {
             "type": "object",
             "properties": {
@@ -2421,6 +2611,10 @@ const docTemplate = `{
                 "payment_url": {
                     "type": "string",
                     "example": "https://api-preprod.phonepe.com/apis/pg-sandbox/..."
+                },
+                "return_url": {
+                    "type": "string",
+                    "example": "https://vouchrs.in/purchase/confirm?txn_id=123"
                 },
                 "transaction_id": {
                     "type": "string",
@@ -2547,7 +2741,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{"https", "http"},
-	Title:            "CardSwap India API",
+	Title:            "Vouchrs API",
 	Description:      "P2P gift card exchange marketplace. Card codes are AES-256 encrypted at rest and **never returned in API responses** — they are delivered to the buyer's registered email only.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

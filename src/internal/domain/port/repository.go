@@ -30,6 +30,8 @@ type BrandRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Brand, error)
 	FindBySlug(ctx context.Context, slug string) (*entity.Brand, error)
 	ListActive(ctx context.Context) ([]*entity.Brand, error)
+	// ListWithCount returns active brands with their current LIVE listing count.
+	ListWithCount(ctx context.Context) ([]*entity.Brand, error)
 	Update(ctx context.Context, brand *entity.Brand) error
 }
 

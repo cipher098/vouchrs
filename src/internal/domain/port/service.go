@@ -35,7 +35,7 @@ type CreateListingInput struct {
 	BrandID    uuid.UUID
 	FaceValue  float64
 	CardCode   string // plaintext — will be encrypted
-	AcceptPool bool   // true = CardSwap pool at recommended price
+	AcceptPool bool   // true = Vouchrs pool at recommended price
 	CustomDiscount *float64 // used when AcceptPool=false
 }
 
@@ -43,6 +43,15 @@ type MarketplaceResult struct {
 	PoolGroups       []*entity.PoolGroup
 	IndividualListings []*entity.Listing
 	Total            int
+}
+
+type RecommendedPriceResult struct {
+	RecommendedDiscountPct float64 `json:"recommended_discount_pct"`
+	SellerPrice            float64 `json:"seller_price"`
+	SellerPayout           float64 `json:"seller_payout"`
+	BuyerPrice             float64 `json:"buyer_price"`
+	PlatformFeePerSide     float64 `json:"platform_fee_per_side"`
+	AvgSellTimeMins        float64 `json:"avg_sell_time_mins"`
 }
 
 type ListingService interface {
@@ -53,14 +62,17 @@ type ListingService interface {
 	GetListing(ctx context.Context, id uuid.UUID) (*entity.Listing, error)
 	// GetMarketplace returns pool groups at the top and individual listings below.
 	GetMarketplace(ctx context.Context, f MarketplaceFilter) (*MarketplaceResult, error)
+	// GetRecommendedPrice returns the platform-recommended pricing for a given brand+face value.
+	GetRecommendedPrice(ctx context.Context, brandID uuid.UUID, faceValue float64) (*RecommendedPriceResult, error)
 }
 
 // --- Purchase ---
 
 type InitiateBuyResult struct {
-	Transaction *entity.Transaction
-	PaymentURL  string // redirect buyer to this PhonePe URL
+	Transaction   *entity.Transaction
+	PaymentURL    string // redirect buyer to this PhonePe URL
 	LockExpiresAt string // ISO8601
+	ReturnURL     string // PhonePe redirect URL (backend-constructed fallback)
 }
 
 type PurchaseService interface {

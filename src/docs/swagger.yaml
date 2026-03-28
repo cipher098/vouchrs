@@ -19,27 +19,61 @@ definitions:
         example: true
         type: boolean
     type: object
-  github_com_gothi_vouchrs_src_internal_domain_entity.BuyRequest:
+  github_com_gothi_vouchrs_src_internal_domain_entity.Brand:
     properties:
-      alertedCount:
-        type: integer
-      brandID:
+      color:
         type: string
-      createdAt:
-        type: string
-      expiresAt:
+      created_at:
         type: string
       id:
         type: string
-      maxPrice:
+      listing_count:
+        description: ListingCount is populated by ListWithCount — not a DB column.
+        type: integer
+      logo_url:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.BrandStatus'
+      updated_at:
+        type: string
+      verification_source:
+        type: string
+    type: object
+  github_com_gothi_vouchrs_src_internal_domain_entity.BrandStatus:
+    enum:
+    - active
+    - testing
+    - inactive
+    type: string
+    x-enum-varnames:
+    - BrandStatusActive
+    - BrandStatusTesting
+    - BrandStatusInactive
+  github_com_gothi_vouchrs_src_internal_domain_entity.BuyRequest:
+    properties:
+      alerted_count:
+        type: integer
+      brand_id:
+        type: string
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      max_price:
         type: number
-      maxValue:
+      max_value:
         type: number
-      minValue:
+      min_value:
         type: number
       status:
         $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.BuyRequestStatus'
-      userID:
+      user_id:
         type: string
     type: object
   github_com_gothi_vouchrs_src_internal_domain_entity.BuyRequestStatus:
@@ -56,26 +90,25 @@ definitions:
     - BuyRequestStatusCancelled
   github_com_gothi_vouchrs_src_internal_domain_entity.CardRequest:
     properties:
-      adminNotes:
+      admin_notes:
         type: string
       brand:
-        description: free-text brand name
         type: string
-      createdAt:
+      created_at:
         type: string
-      desiredValue:
+      desired_value:
         type: number
-      fulfilledAt:
+      fulfilled_at:
         type: string
       id:
         type: string
       status:
         $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.CardRequestStatus'
-      updatedAt:
+      updated_at:
         type: string
       urgency:
         $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.CardRequestUrgency'
-      userID:
+      user_id:
         type: string
     type: object
   github_com_gothi_vouchrs_src_internal_domain_entity.CardRequestStatus:
@@ -104,21 +137,21 @@ definitions:
     - CardRequestUrgency1Week
   github_com_gothi_vouchrs_src_internal_domain_entity.FraudFlag:
     properties:
-      createdAt:
+      created_at:
         type: string
       id:
         type: string
-      isResolved:
+      is_resolved:
         type: boolean
-      listingID:
+      listing_id:
         type: string
       reason:
         type: string
-      resolvedAt:
+      resolved_at:
         type: string
       severity:
         $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.FraudSeverity'
-      userID:
+      user_id:
         type: string
     type: object
   github_com_gothi_vouchrs_src_internal_domain_entity.FraudSeverity:
@@ -133,49 +166,41 @@ definitions:
     - FraudSeverityHigh
   github_com_gothi_vouchrs_src_internal_domain_entity.Listing:
     properties:
-      brandID:
+      brand_id:
         type: string
-      buyerPrice:
-        description: what buyer pays
+      buyer_price:
         type: number
-      codeEncrypted:
-        description: AES-256-GCM encrypted
+      code_encrypted:
         type: string
-      codeHash:
-        description: SHA-256 for duplicate check
+      code_hash:
         type: string
-      createdAt:
+      created_at:
         type: string
-      discountPct:
-        description: e.g. 9.0 for 9% off
+      discount_pct:
         type: number
-      faceValue:
-        description: e.g. 1000.00
+      face_value:
         type: number
-      gate1At:
+      gate1_at:
         type: string
       id:
         type: string
-      isPool:
-        description: true = CardSwap pool
+      is_pool:
         type: boolean
-      lockBuyerID:
+      lock_buyer_id:
         type: string
-      lockExpiresAt:
+      lock_expires_at:
         type: string
-      sellerID:
+      seller_id:
         type: string
-      sellerPayout:
-        description: what seller receives
+      seller_payout:
         type: number
-      soldAt:
+      sold_at:
         type: string
       status:
         $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.ListingStatus'
-      updatedAt:
+      updated_at:
         type: string
-      verifiedBalance:
-        description: balance at Gate 1
+      verified_balance:
         type: number
     type: object
   github_com_gothi_vouchrs_src_internal_domain_entity.ListingStatus:
@@ -196,63 +221,58 @@ definitions:
     - ListingStatusFraudHold
   github_com_gothi_vouchrs_src_internal_domain_entity.PoolGroup:
     properties:
-      activeCount:
-        description: LIVE listings in pool
+      active_count:
         type: integer
-      avgSellTimeMins:
+      avg_sell_time_mins:
         type: number
-      brandID:
+      brand_id:
         type: string
-      buyerPrice:
+      buyer_price:
         type: number
-      createdAt:
+      created_at:
         type: string
-      discountPct:
+      discount_pct:
         type: number
-      faceValue:
+      face_value:
         type: number
       id:
         type: string
-      recommendedPrice:
-        description: seller receives this
+      recommended_price:
         type: number
-      updatedAt:
+      updated_at:
         type: string
     type: object
   github_com_gothi_vouchrs_src_internal_domain_entity.Transaction:
     properties:
-      buyerAmount:
+      buyer_amount:
         type: number
-      buyerID:
+      buyer_id:
         type: string
-      codeRevealedAt:
-        description: when email was sent
+      code_revealed_at:
         type: string
-      completedAt:
+      completed_at:
         type: string
-      createdAt:
+      created_at:
         type: string
       id:
         type: string
-      listingID:
+      listing_id:
         type: string
-      lockStartedAt:
+      lock_started_at:
         type: string
-      paidAt:
+      paid_at:
         type: string
-      paymentRef:
-        description: PG merchant transaction ID
+      payment_ref:
         type: string
-      payoutRef:
-        description: Razorpay payout ID
+      payout_ref:
         type: string
-      sellerID:
+      seller_id:
         type: string
-      sellerPayout:
+      seller_payout:
         type: number
       status:
         $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.TransactionStatus'
-      updatedAt:
+      updated_at:
         type: string
     type: object
   github_com_gothi_vouchrs_src_internal_domain_entity.TransactionStatus:
@@ -319,6 +339,21 @@ definitions:
         items:
           $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.CardRequest'
         type: array
+    type: object
+  github_com_gothi_vouchrs_src_internal_domain_port.RecommendedPriceResult:
+    properties:
+      avg_sell_time_mins:
+        type: number
+      buyer_price:
+        type: number
+      platform_fee_per_side:
+        type: number
+      recommended_discount_pct:
+        type: number
+      seller_payout:
+        type: number
+      seller_price:
+        type: number
     type: object
   src_delivery_http_handler.authUserDoc:
     properties:
@@ -404,6 +439,12 @@ definitions:
     - card_code
     - face_value
     type: object
+  src_delivery_http_handler.initiateBuyBody:
+    properties:
+      return_url:
+        example: https://vouchrs.in/purchase/confirm?txn_id=123
+        type: string
+    type: object
   src_delivery_http_handler.initiateBuyResponse:
     properties:
       amount:
@@ -414,6 +455,9 @@ definitions:
         type: string
       payment_url:
         example: https://api-preprod.phonepe.com/apis/pg-sandbox/...
+        type: string
+      return_url:
+        example: https://vouchrs.in/purchase/confirm?txn_id=123
         type: string
       transaction_id:
         example: 123e4567-e89b-12d3-a456-426614174000
@@ -492,12 +536,12 @@ definitions:
 host: localhost:8080
 info:
   contact:
-    email: support@cardswap.in
-    name: CardSwap Support
+    email: support@vouchrs.in
+    name: Vouchrs Support
   description: P2P gift card exchange marketplace. Card codes are AES-256 encrypted
     at rest and **never returned in API responses** — they are delivered to the buyer's
     registered email only.
-  title: CardSwap India API
+  title: Vouchrs API
   version: "1.0"
 paths:
   /api/v1/admin/auth/callback:
@@ -1005,6 +1049,31 @@ paths:
       summary: Verify OTP and receive JWT tokens
       tags:
       - auth
+  /api/v1/brands:
+    get:
+      description: Returns all active brands with their current live listing count.
+        Used by the frontend for the brand grid and filter chips.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_entity.Brand'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+      summary: List active brands
+      tags:
+      - brands
   /api/v1/buy-requests:
     get:
       description: Returns all active buy requests created by the authenticated user.
@@ -1374,6 +1443,8 @@ paths:
       - listings
   /api/v1/listings/{id}/buy:
     post:
+      consumes:
+      - application/json
       description: Runs Gate 2 re-verification, atomically locks the listing for 10
         minutes, creates a pending transaction, and returns a PhonePe payment URL.
         The buyer must complete payment before lock_expires_at or the listing is released.
@@ -1385,6 +1456,11 @@ paths:
         name: id
         required: true
         type: string
+      - description: Optional return URL for PhonePe redirect
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/src_delivery_http_handler.initiateBuyBody'
       produces:
       - application/json
       responses:
@@ -1422,11 +1498,56 @@ paths:
       summary: Initiate purchase (buyer)
       tags:
       - purchase
+  /api/v1/listings/recommended-price:
+    get:
+      description: Returns the platform-recommended pricing breakdown for a given
+        brand and face value. Use this before submitting POST /api/v1/listings to
+        show the seller what they will receive.
+      parameters:
+      - description: Brand UUID
+        in: query
+        name: brand_id
+        required: true
+        type: string
+      - description: Card face value in INR
+        in: query
+        name: face_value
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_gothi_vouchrs_src_internal_domain_port.RecommendedPriceResult'
+              type: object
+        "400":
+          description: Missing or invalid params
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+        "404":
+          description: Brand not found
+          schema:
+            $ref: '#/definitions/github_com_gothi_vouchrs_src_delivery_http_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get recommended listing price
+      tags:
+      - listings
   /api/v1/marketplace:
     get:
-      description: Returns CardSwap pool groups (aggregated inventory) at the top
-        and individual seller listings below. Pool groups show the best available
-        price for each brand+denomination combination.
+      description: Returns Vouchrs pool groups (aggregated inventory) at the top and
+        individual seller listings below. Pool groups show the best available price
+        for each brand+denomination combination.
       parameters:
       - description: Filter by brand UUID
         in: query

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -23,11 +24,16 @@ func NewPurchaseHandler(purchase port.PurchaseService, payment port.PaymentGatew
 
 // --- doc types ---
 
+type initiateBuyBody struct {
+	ReturnURL string `json:"return_url" example:"https://vouchrs.in/purchase/confirm?txn_id=123"`
+}
+
 type initiateBuyResponse struct {
 	TransactionID string  `json:"transaction_id"  example:"123e4567-e89b-12d3-a456-426614174000"`
 	PaymentURL    string  `json:"payment_url"     example:"https://api-preprod.phonepe.com/apis/pg-sandbox/..."`
 	Amount        float64 `json:"amount"          example:"910"`
 	LockExpiresAt string  `json:"lock_expires_at" example:"2024-01-01T10:10:00Z"`
+	ReturnURL     string  `json:"return_url"      example:"https://vouchrs.in/purchase/confirm?txn_id=123"`
 }
 
 // InitiateBuy godoc
@@ -35,9 +41,11 @@ type initiateBuyResponse struct {
 //	@Summary      Initiate purchase (buyer)
 //	@Description  Runs Gate 2 re-verification, atomically locks the listing for 10 minutes, creates a pending transaction, and returns a PhonePe payment URL. The buyer must complete payment before lock_expires_at or the listing is released. **The card code is never returned here** — it is sent to the buyer's email after payment succeeds.
 //	@Tags         purchase
+//	@Accept       json
 //	@Produce      json
 //	@Security     BearerAuth
-//	@Param        id  path string true "Listing UUID to purchase"
+//	@Param        id   path string          true "Listing UUID to purchase"
+//	@Param        body body initiateBuyBody false "Optional return URL for PhonePe redirect"
 //	@Success      200 {object} response.Response{data=initiateBuyResponse}
 //	@Failure      400 {object} response.Response "Invalid UUID"
 //	@Failure      401 {object} response.Response
@@ -57,10 +65,19 @@ func (h *PurchaseHandler) InitiateBuy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var body initiateBuyBody
+	// body is optional — ignore decode errors
+	_ = json.NewDecoder(r.Body).Decode(&body)
+
 	result, err := h.purchase.InitiateBuy(r.Context(), buyerID, listingID)
 	if err != nil {
 		response.Error(w, err)
 		return
+	}
+
+	returnURL := body.ReturnURL
+	if returnURL == "" {
+		returnURL = result.ReturnURL
 	}
 
 	response.JSON(w, http.StatusOK, map[string]interface{}{
@@ -68,6 +85,7 @@ func (h *PurchaseHandler) InitiateBuy(w http.ResponseWriter, r *http.Request) {
 		"payment_url":     result.PaymentURL,
 		"amount":          result.Transaction.BuyerAmount,
 		"lock_expires_at": result.LockExpiresAt,
+		"return_url":      returnURL,
 	})
 }
 

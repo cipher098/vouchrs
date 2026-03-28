@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -139,10 +140,44 @@ func (h *ListingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, map[string]string{"message": "listing cancelled"})
 }
 
+// RecommendedPrice godoc
+//
+//	@Summary      Get recommended listing price
+//	@Description  Returns the platform-recommended pricing breakdown for a given brand and face value. Use this before submitting POST /api/v1/listings to show the seller what they will receive.
+//	@Tags         listings
+//	@Produce      json
+//	@Security     BearerAuth
+//	@Param        brand_id    query string  true "Brand UUID"
+//	@Param        face_value  query number  true "Card face value in INR"
+//	@Success      200 {object} response.Response{data=port.RecommendedPriceResult}
+//	@Failure      400 {object} response.Response "Missing or invalid params"
+//	@Failure      401 {object} response.Response
+//	@Failure      404 {object} response.Response "Brand not found"
+//	@Router       /api/v1/listings/recommended-price [get]
+func (h *ListingHandler) RecommendedPrice(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	brandID, err := uuid.Parse(q.Get("brand_id"))
+	if err != nil {
+		response.Error(w, apperror.New(apperror.ErrBadRequest, "invalid brand_id"))
+		return
+	}
+	var faceValue float64
+	if _, err := fmt.Sscanf(q.Get("face_value"), "%f", &faceValue); err != nil || faceValue <= 0 {
+		response.Error(w, apperror.New(apperror.ErrBadRequest, "face_value must be a positive number"))
+		return
+	}
+	result, err := h.listing.GetRecommendedPrice(r.Context(), brandID, faceValue)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, result)
+}
+
 // Marketplace godoc
 //
 //	@Summary      Browse marketplace
-//	@Description  Returns CardSwap pool groups (aggregated inventory) at the top and individual seller listings below. Pool groups show the best available price for each brand+denomination combination.
+//	@Description  Returns Vouchrs pool groups (aggregated inventory) at the top and individual seller listings below. Pool groups show the best available price for each brand+denomination combination.
 //	@Tags         marketplace
 //	@Produce      json
 //	@Param        brand_id query string false "Filter by brand UUID"

@@ -24,17 +24,17 @@ const (
 	CardRequestUrgency1Week    CardRequestUrgency = "within_1_week"
 )
 
-// CardRequest is a buyer or seller request for a brand/value not yet on platform.
+// CardRequest is a buyer request for a brand/value not yet on platform.
 // Goes into the admin queue for manual review.
 type CardRequest struct {
-	ID           uuid.UUID          `db:"id"`
-	UserID       uuid.UUID          `db:"user_id"`
-	Brand        string             `db:"brand"`        // free-text brand name
-	DesiredValue float64            `db:"desired_value"`
-	Urgency      CardRequestUrgency `db:"urgency"`
-	Status       CardRequestStatus  `db:"status"`
-	AdminNotes   string             `db:"admin_notes"`
-	FulfilledAt  *time.Time         `db:"fulfilled_at"`
-	CreatedAt    time.Time          `db:"created_at"`
-	UpdatedAt    time.Time          `db:"updated_at"`
+	ID           uuid.UUID          `db:"id"            json:"id"`
+	UserID       uuid.UUID          `db:"user_id"       json:"user_id"`
+	Brand        string             `db:"brand"         json:"brand"`
+	DesiredValue float64            `db:"desired_value" json:"desired_value"`
+	Urgency      CardRequestUrgency `db:"urgency"       json:"urgency"`
+	Status       CardRequestStatus  `db:"status"        json:"status"`
+	AdminNotes   string             `db:"admin_notes"   json:"admin_notes,omitempty"`
+	FulfilledAt  *time.Time         `db:"fulfilled_at"  json:"fulfilled_at,omitempty"`
+	CreatedAt    time.Time          `db:"created_at"    json:"created_at"`
+	UpdatedAt    time.Time          `db:"updated_at"    json:"updated_at"`
 }

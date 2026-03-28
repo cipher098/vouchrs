@@ -17,6 +17,7 @@ import (
 func NewRouter(
 	tokens port.TokenService,
 	authH *handler.AuthHandler,
+	brandH *handler.BrandHandler,
 	listingH *handler.ListingHandler,
 	purchaseH *handler.PurchaseHandler,
 	requestH *handler.RequestHandler,
@@ -33,13 +34,18 @@ func NewRouter(
 	r.Get("/health", handler.Health)
 
 	// Swagger UI — /docs/ (interactive API explorer)
+	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/docs/", http.StatusMovedPermanently)
+	})
 	r.Get("/docs/*", httpSwagger.Handler(
 		httpSwagger.URL("/docs/doc.json"),
 	))
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// --- Public routes ---
+		r.Get("/brands", brandH.ListBrands)
 		r.Get("/marketplace", listingH.Marketplace)
+		r.Get("/listings/recommended-price", listingH.RecommendedPrice)
 		r.Get("/listings/{id}", listingH.GetByID)
 
 		// --- Auth ---

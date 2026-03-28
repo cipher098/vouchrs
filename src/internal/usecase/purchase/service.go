@@ -213,6 +213,7 @@ func (s *Service) InitiateBuy(ctx context.Context, buyerID, listingID uuid.UUID)
 		Transaction:   txn,
 		PaymentURL:    pgOrder.PaymentURL,
 		LockExpiresAt: lockExpiresAt.Format(time.RFC3339),
+		ReturnURL:     s.redirectURL,
 	}, nil
 }
 

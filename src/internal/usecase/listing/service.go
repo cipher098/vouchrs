@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	platformDiscountPct = 9.0  // buyer pays 9% off face value
-	sellerPayoutPct     = 90.0 // seller receives 90% of face value
-	maxListingsPerDay   = 5
+	platformDiscountPct  = 9.0  // buyer pays 9% off face value
+	sellerPayoutPct      = 90.0 // seller receives 90% of face value
+	platformFeePct       = 0.5  // 0.5% fee per side
+	avgSellTimeMinsV1    = 45.0 // fixed V1 value
+	maxListingsPerDay    = 5
 )
 
 type Service struct {
@@ -211,6 +213,28 @@ func (s *Service) GetMarketplace(ctx context.Context, f port.MarketplaceFilter) 
 		PoolGroups:         poolGroups,
 		IndividualListings: individuals,
 		Total:              total,
+	}, nil
+}
+
+// GetRecommendedPrice returns the platform-recommended pricing breakdown for a brand+face value.
+func (s *Service) GetRecommendedPrice(ctx context.Context, brandID uuid.UUID, faceValue float64) (*port.RecommendedPriceResult, error) {
+	if _, err := s.brands.FindByID(ctx, brandID); err != nil {
+		return nil, err
+	}
+
+	discountPct := platformDiscountPct
+	sellerPrice := faceValue * (1 - discountPct/100)
+	feeAmount := faceValue * (platformFeePct / 100)
+	sellerPayout := sellerPrice - feeAmount
+	buyerPrice := sellerPrice + feeAmount
+
+	return &port.RecommendedPriceResult{
+		RecommendedDiscountPct: discountPct,
+		SellerPrice:            sellerPrice,
+		SellerPayout:           sellerPayout,
+		BuyerPrice:             buyerPrice,
+		PlatformFeePerSide:     feeAmount,
+		AvgSellTimeMins:        avgSellTimeMinsV1,
 	}, nil
 }
 
