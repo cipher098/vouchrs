@@ -9,21 +9,21 @@ import (
 
 // Config holds all application configuration loaded from environment variables.
 type Config struct {
-	App       AppConfig
-	DB        DBConfig
-	Redis     RedisConfig
-	JWT       JWTConfig
-	Cipher    CipherConfig
-	R2        R2Config
-	TwoFactor TwoFactorConfig
-	Resend    ResendConfig
-	PhonePe   PhonePeConfig
-	Razorpay  RazorpayConfig
-	Google    GoogleConfig
-	Admin     AdminConfig
+	App        AppConfig
+	DB         DBConfig
+	Redis      RedisConfig
+	JWT        JWTConfig
+	Cipher     CipherConfig
+	R2         R2Config
+	TwoFactor  TwoFactorConfig
+	Resend     ResendConfig
+	PhonePe    PhonePeConfig
+	Razorpay   RazorpayConfig
+	Google     GoogleConfig
+	Admin      AdminConfig
 	Qwikcilver QwikcilverConfig
-	OTP       OTPConfig
-	Asynq     AsynqConfig
+	OTP        OTPConfig
+	Asynq      AsynqConfig
 }
 
 type AppConfig struct {
@@ -63,7 +63,8 @@ type R2Config struct {
 }
 
 type TwoFactorConfig struct {
-	APIKey string
+	APIKey       string
+	TemplateName string
 }
 
 type ResendConfig struct {
@@ -72,10 +73,10 @@ type ResendConfig struct {
 }
 
 type PhonePeConfig struct {
-	MerchantID  string
-	SaltKey     string
-	SaltIndex   string
-	Env         string // UAT or PROD
+	MerchantID string
+	SaltKey    string
+	SaltIndex  string
+	Env        string // UAT or PROD
 }
 
 type RazorpayConfig struct {
@@ -154,7 +155,10 @@ func Load() (*Config, error) {
 		PublicURL:       requireEnv("R2_PUBLIC_URL"),
 	}
 
-	cfg.TwoFactor = TwoFactorConfig{APIKey: requireEnv("TWOFACTOR_API_KEY")}
+	cfg.TwoFactor = TwoFactorConfig{
+		APIKey:       requireEnv("TWOFACTOR_API_KEY"),
+		TemplateName: getEnv("TWOFACTOR_TEMPLATE", "otp"),
+	}
 
 	cfg.Resend = ResendConfig{
 		APIKey: requireEnv("RESEND_API_KEY"),

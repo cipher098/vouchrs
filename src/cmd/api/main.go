@@ -135,7 +135,7 @@ func main() {
 		cacheService,
 	)
 
-	smsSvc := smspkg.NewTwoFactor(cfg.TwoFactor.APIKey)
+	smsSvc := smspkg.NewTwoFactor(cfg.TwoFactor.APIKey, cfg.TwoFactor.TemplateName)
 	emailSvc := emailpkg.NewResendClient(cfg.Resend.APIKey, cfg.Resend.From)
 	oauthSvc := oauth.NewGoogleOAuth(cfg.Google.ClientID, cfg.Google.ClientSecret, cfg.Google.RedirectURL)
 

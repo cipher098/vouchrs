@@ -15,8 +15,9 @@ import (
 const twoFactorBaseURL = "https://2factor.in/API/V1"
 
 type twoFactorClient struct {
-	apiKey     string
-	httpClient *http.Client
+	apiKey       string
+	templateName string
+	httpClient   *http.Client
 }
 
 type twoFactorResponse struct {
@@ -25,64 +26,44 @@ type twoFactorResponse struct {
 }
 
 // NewTwoFactor creates an SMSService backed by 2factor.in.
-func NewTwoFactor(apiKey string) port.SMSService {
+// templateName must match the template created on your 2factor.in dashboard,
+// e.g. "VOUCHRS_OTP". The template body should contain {otp} as the placeholder.
+func NewTwoFactor(apiKey, templateName string) port.SMSService {
 	return &twoFactorClient{
-		apiKey:     apiKey,
-		httpClient: &http.Client{Timeout: 10 * time.Second},
+		apiKey:       apiKey,
+		templateName: templateName,
+		httpClient:   &http.Client{Timeout: 10 * time.Second},
 	}
+}
+
+// SendOTP delivers otp to phone using the configured SMS template.
+// URL: GET /API/V1/{api_key}/SMS/{phone}/{otp}/{template_name}
+func (c *twoFactorClient) SendOTP(ctx context.Context, phone, otp string) error {
+	url := fmt.Sprintf("%s/%s/SMS/%s/%s/%s",
+		twoFactorBaseURL, c.apiKey, normalizePhone(phone), otp, c.templateName)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return fmt.Errorf("build 2factor request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("2factor request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	var result twoFactorResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return fmt.Errorf("parse 2factor response: %w", err)
+	}
+	if result.Status != "Success" {
+		return fmt.Errorf("2factor error: %s", result.Details)
+	}
+	return nil
 }
 
 // normalizePhone strips the leading '+' so 2factor.in receives e.g. "919876543210".
 func normalizePhone(phone string) string {
 	return strings.TrimPrefix(phone, "+")
-}
-
-// SendOTP calls the AUTOGEN endpoint and returns the session ID.
-func (c *twoFactorClient) SendOTP(ctx context.Context, phone string) (string, error) {
-	url := fmt.Sprintf("%s/%s/SMS/%s/AUTOGEN", twoFactorBaseURL, c.apiKey, normalizePhone(phone))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return "", fmt.Errorf("build 2factor request: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("2factor request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	var result twoFactorResponse
-	if err := json.Unmarshal(body, &result); err != nil {
-		return "", fmt.Errorf("parse 2factor response: %w", err)
-	}
-	if result.Status != "Success" {
-		return "", fmt.Errorf("2factor error: %s", result.Details)
-	}
-	return result.Details, nil // Details is the session ID on success
-}
-
-// VerifyOTP calls the VERIFY endpoint and returns nil on match.
-func (c *twoFactorClient) VerifyOTP(ctx context.Context, sessionID, otp string) error {
-	url := fmt.Sprintf("%s/%s/SMS/VERIFY/%s/%s", twoFactorBaseURL, c.apiKey, sessionID, otp)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return fmt.Errorf("build 2factor verify request: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("2factor verify request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	var result twoFactorResponse
-	if err := json.Unmarshal(body, &result); err != nil {
-		return fmt.Errorf("parse 2factor verify response: %w", err)
-	}
-	if result.Status != "Success" {
-		return fmt.Errorf("2factor verify error: %s", result.Details)
-	}
-	return nil
 }

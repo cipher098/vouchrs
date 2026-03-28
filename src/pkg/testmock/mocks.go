@@ -118,13 +118,8 @@ func (m *CacheSvc) SetNX(ctx context.Context, key string, value interface{}, ttl
 
 type SMSSvc struct{ mock.Mock }
 
-func (m *SMSSvc) SendOTP(ctx context.Context, phone string) (string, error) {
-	args := m.Called(ctx, phone)
-	return args.String(0), args.Error(1)
-}
-
-func (m *SMSSvc) VerifyOTP(ctx context.Context, sessionID, otp string) error {
-	return m.Called(ctx, sessionID, otp).Error(0)
+func (m *SMSSvc) SendOTP(ctx context.Context, phone, otp string) error {
+	return m.Called(ctx, phone, otp).Error(0)
 }
 
 // --- EmailSvc ---
