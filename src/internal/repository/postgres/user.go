@@ -34,7 +34,7 @@ func (r *UserRepository) Create(ctx context.Context, u *entity.User) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO users (id, phone, email, full_name, role, is_verified, is_banned, is_flagged,
 		                   listing_count_today, listing_count_date, upi_id, created_at, updated_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+		VALUES ($1, NULLIF($2,''), NULLIF($3,''), $4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
 		u.ID, u.Phone, u.Email, u.FullName, u.Role, u.IsVerified, u.IsBanned, u.IsFlagged,
 		u.ListingCountToday, u.ListingCountDate, u.UPIID, u.CreatedAt, u.UpdatedAt,
 	)
@@ -51,7 +51,7 @@ func (r *UserRepository) Create(ctx context.Context, u *entity.User) error {
 func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
 	u := &entity.User{}
 	err := r.db.QueryRow(ctx, `
-		SELECT id, phone, email, full_name, role, is_verified, is_banned, is_flagged,
+		SELECT id, COALESCE(phone,''), COALESCE(email,''), full_name, role, is_verified, is_banned, is_flagged,
 		       listing_count_today, listing_count_date, upi_id, created_at, updated_at
 		FROM users WHERE id = $1`, id).Scan(
 		&u.ID, &u.Phone, &u.Email, &u.FullName, &u.Role, &u.IsVerified, &u.IsBanned, &u.IsFlagged,
@@ -69,7 +69,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Us
 func (r *UserRepository) FindByPhone(ctx context.Context, phone string) (*entity.User, error) {
 	u := &entity.User{}
 	err := r.db.QueryRow(ctx, `
-		SELECT id, phone, email, full_name, role, is_verified, is_banned, is_flagged,
+		SELECT id, COALESCE(phone,''), COALESCE(email,''), full_name, role, is_verified, is_banned, is_flagged,
 		       listing_count_today, listing_count_date, upi_id, created_at, updated_at
 		FROM users WHERE phone = $1`, phone).Scan(
 		&u.ID, &u.Phone, &u.Email, &u.FullName, &u.Role, &u.IsVerified, &u.IsBanned, &u.IsFlagged,
@@ -87,7 +87,7 @@ func (r *UserRepository) FindByPhone(ctx context.Context, phone string) (*entity
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
 	u := &entity.User{}
 	err := r.db.QueryRow(ctx, `
-		SELECT id, phone, email, full_name, role, is_verified, is_banned, is_flagged,
+		SELECT id, COALESCE(phone,''), COALESCE(email,''), full_name, role, is_verified, is_banned, is_flagged,
 		       listing_count_today, listing_count_date, upi_id, created_at, updated_at
 		FROM users WHERE email = $1`, email).Scan(
 		&u.ID, &u.Phone, &u.Email, &u.FullName, &u.Role, &u.IsVerified, &u.IsBanned, &u.IsFlagged,
@@ -105,7 +105,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity
 func (r *UserRepository) Update(ctx context.Context, u *entity.User) error {
 	u.UpdatedAt = time.Now().UTC()
 	_, err := r.db.Exec(ctx, `
-		UPDATE users SET phone=$1, email=$2, full_name=$3, role=$4, is_verified=$5,
+		UPDATE users SET phone=NULLIF($1,''), email=NULLIF($2,''), full_name=$3, role=$4, is_verified=$5,
 		is_banned=$6, is_flagged=$7, upi_id=$8, updated_at=$9
 		WHERE id=$10`,
 		u.Phone, u.Email, u.FullName, u.Role, u.IsVerified, u.IsBanned, u.IsFlagged,
@@ -142,7 +142,7 @@ func (r *UserRepository) List(ctx context.Context, p pagination.Params) ([]*enti
 	}
 
 	rows, err := r.db.Query(ctx, `
-		SELECT id, phone, email, full_name, role, is_verified, is_banned, is_flagged,
+		SELECT id, COALESCE(phone,''), COALESCE(email,''), full_name, role, is_verified, is_banned, is_flagged,
 		       listing_count_today, listing_count_date, upi_id, created_at, updated_at
 		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
 		p.Limit, p.Offset)
