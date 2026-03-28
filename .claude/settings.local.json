@@ -3,7 +3,8 @@
     "allow": [
       "Bash(go test:*)",
       "Bash(brew list:*)",
-      "Bash(go build:*)"
+      "Bash(go build:*)",
+      "WebSearch"
     ]
   }
 }

@@ -56,8 +56,15 @@ type StorageService interface {
 
 // --- SMS ---
 
+// SMSService is implemented by providers that handle OTP delivery and verification.
+// For 2factor.in, the provider generates the OTP and returns a session ID;
+// the caller stores the session ID and passes it back on verification.
 type SMSService interface {
-	SendOTP(ctx context.Context, phone, otp string) error
+	// SendOTP sends an OTP to the given phone number.
+	// Returns a provider session ID that must be passed to VerifyOTP.
+	SendOTP(ctx context.Context, phone string) (sessionID string, err error)
+	// VerifyOTP validates the code the user entered against the provider session.
+	VerifyOTP(ctx context.Context, sessionID, otp string) error
 }
 
 // --- Email ---

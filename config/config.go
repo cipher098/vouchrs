@@ -15,7 +15,7 @@ type Config struct {
 	JWT       JWTConfig
 	Cipher    CipherConfig
 	R2        R2Config
-	Fast2SMS  Fast2SMSConfig
+	TwoFactor TwoFactorConfig
 	Resend    ResendConfig
 	PhonePe   PhonePeConfig
 	Razorpay  RazorpayConfig
@@ -62,7 +62,7 @@ type R2Config struct {
 	PublicURL       string
 }
 
-type Fast2SMSConfig struct {
+type TwoFactorConfig struct {
 	APIKey string
 }
 
@@ -154,7 +154,7 @@ func Load() (*Config, error) {
 		PublicURL:       requireEnv("R2_PUBLIC_URL"),
 	}
 
-	cfg.Fast2SMS = Fast2SMSConfig{APIKey: requireEnv("FAST2SMS_API_KEY")}
+	cfg.TwoFactor = TwoFactorConfig{APIKey: requireEnv("TWOFACTOR_API_KEY")}
 
 	cfg.Resend = ResendConfig{
 		APIKey: requireEnv("RESEND_API_KEY"),

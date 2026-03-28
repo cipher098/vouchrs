@@ -72,33 +72,46 @@ func (s *Service) RequestOTP(ctx context.Context, contact string) error {
 		}
 	}
 
-	otp, err := generateOTP(s.otpLen)
-	if err != nil {
-		return fmt.Errorf("generate otp: %w", err)
-	}
-
-	if err := s.cache.Set(ctx, "otp:"+contact, otp, otpTTL); err != nil {
-		return fmt.Errorf("store otp: %w", err)
-	}
-
 	// Increment attempt counter
-	newCount := attempts + 1
-	_ = s.cache.Set(ctx, attemptsKey, newCount, otpAttemptsWindow)
+	_ = s.cache.Set(ctx, attemptsKey, attempts+1, otpAttemptsWindow)
 
-	// In dev mode, print OTP to logs instead of sending externally.
-	if s.otpDevMode {
-		s.logger.Info("DEV MODE — OTP generated", "contact", contact, "otp", otp)
-		return nil
-	}
-
-	// Send via appropriate channel
 	if isEmail(contact) {
+		// Email: we generate the OTP and store it for local verification.
+		otp, err := generateOTP(s.otpLen)
+		if err != nil {
+			return fmt.Errorf("generate otp: %w", err)
+		}
+		if err := s.cache.Set(ctx, "otp:"+contact, otp, otpTTL); err != nil {
+			return fmt.Errorf("store otp: %w", err)
+		}
+		if s.otpDevMode {
+			s.logger.Info("DEV MODE — OTP generated", "contact", contact, "otp", otp)
+			return nil
+		}
 		if err := s.email.SendOTP(ctx, contact, otp); err != nil {
 			return fmt.Errorf("send otp email: %w", err)
 		}
 	} else {
-		if err := s.sms.SendOTP(ctx, contact, otp); err != nil {
+		// Phone: 2factor.in generates the OTP; we store the returned session ID.
+		if s.otpDevMode {
+			// In dev mode generate locally so we can log it without calling the provider.
+			otp, err := generateOTP(s.otpLen)
+			if err != nil {
+				return fmt.Errorf("generate otp: %w", err)
+			}
+			if err := s.cache.Set(ctx, "otp:"+contact, otp, otpTTL); err != nil {
+				return fmt.Errorf("store otp: %w", err)
+			}
+			s.logger.Info("DEV MODE — OTP generated", "contact", contact, "otp", otp)
+			return nil
+		}
+		sessionID, err := s.sms.SendOTP(ctx, contact)
+		if err != nil {
 			return fmt.Errorf("send otp sms: %w", err)
+		}
+		// Store session ID so VerifyOTP can call the provider's verify endpoint.
+		if err := s.cache.Set(ctx, "otp:"+contact, sessionID, otpTTL); err != nil {
+			return fmt.Errorf("store otp session: %w", err)
 		}
 	}
 	return nil
@@ -106,13 +119,23 @@ func (s *Service) RequestOTP(ctx context.Context, contact string) error {
 
 // VerifyOTP validates the OTP and issues JWT tokens. Creates a new user on first login.
 func (s *Service) VerifyOTP(ctx context.Context, contact, otp string) (*port.AuthTokenPair, *entity.User, error) {
-	var storedOTP string
-	if err := s.cache.Get(ctx, "otp:"+contact, &storedOTP); err != nil {
+	var stored string
+	if err := s.cache.Get(ctx, "otp:"+contact, &stored); err != nil {
 		return nil, nil, apperror.ErrOTPInvalid
 	}
-	if storedOTP != otp {
-		return nil, nil, apperror.ErrOTPInvalid
+
+	if isEmail(contact) || s.otpDevMode {
+		// Email (or dev mode phone): stored value is the OTP itself — compare directly.
+		if stored != otp {
+			return nil, nil, apperror.ErrOTPInvalid
+		}
+	} else {
+		// Phone in production: stored value is the 2factor.in session ID — verify via API.
+		if err := s.sms.VerifyOTP(ctx, stored, otp); err != nil {
+			return nil, nil, apperror.ErrOTPInvalid
+		}
 	}
+
 	// OTP is single-use
 	_ = s.cache.Delete(ctx, "otp:"+contact, "otp_attempts:"+contact)
 
