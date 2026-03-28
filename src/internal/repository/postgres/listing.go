@@ -25,14 +25,14 @@ func NewListingRepository(db *pgxpool.Pool) *ListingRepository {
 }
 
 const listingCols = `id, seller_id, brand_id, face_value, buyer_price, seller_payout, discount_pct,
-	is_pool, code_encrypted, code_hash, status, lock_buyer_id, lock_expires_at,
+	is_pool, expiry_date, code_encrypted, code_hash, pin_encrypted, status, lock_buyer_id, lock_expires_at,
 	gate1_at, sold_at, verified_balance, created_at, updated_at`
 
 func scanListing(row pgx.Row) (*entity.Listing, error) {
 	l := &entity.Listing{}
 	err := row.Scan(
 		&l.ID, &l.SellerID, &l.BrandID, &l.FaceValue, &l.BuyerPrice, &l.SellerPayout, &l.DiscountPct,
-		&l.IsPool, &l.CodeEncrypted, &l.CodeHash, &l.Status, &l.LockBuyerID, &l.LockExpiresAt,
+		&l.IsPool, &l.ExpiryDate, &l.CodeEncrypted, &l.CodeHash, &l.PinEncrypted, &l.Status, &l.LockBuyerID, &l.LockExpiresAt,
 		&l.Gate1At, &l.SoldAt, &l.VerifiedBalance, &l.CreatedAt, &l.UpdatedAt,
 	)
 	return l, err
@@ -48,9 +48,9 @@ func (r *ListingRepository) Create(ctx context.Context, l *entity.Listing) error
 
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO listings (`+listingCols+`)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
 		l.ID, l.SellerID, l.BrandID, l.FaceValue, l.BuyerPrice, l.SellerPayout, l.DiscountPct,
-		l.IsPool, l.CodeEncrypted, l.CodeHash, l.Status, l.LockBuyerID, l.LockExpiresAt,
+		l.IsPool, l.ExpiryDate, l.CodeEncrypted, l.CodeHash, l.PinEncrypted, l.Status, l.LockBuyerID, l.LockExpiresAt,
 		l.Gate1At, l.SoldAt, l.VerifiedBalance, l.CreatedAt, l.UpdatedAt,
 	)
 	if err != nil {

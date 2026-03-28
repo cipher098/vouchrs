@@ -26,8 +26,10 @@ type Listing struct {
 	SellerPayout    float64       `db:"seller_payout"    json:"seller_payout"`
 	DiscountPct     float64       `db:"discount_pct"     json:"discount_pct"`
 	IsPool          bool          `db:"is_pool"          json:"is_pool"`
+	ExpiryDate      string        `db:"expiry_date"      json:"expiry_date"`
 	CodeEncrypted   string        `db:"code_encrypted"   json:"code_encrypted,omitempty"`
 	CodeHash        string        `db:"code_hash"        json:"code_hash,omitempty"`
+	PinEncrypted    string        `db:"pin_encrypted"    json:"pin_encrypted,omitempty"`
 	Status          ListingStatus `db:"status"           json:"status"`
 	LockBuyerID     *uuid.UUID    `db:"lock_buyer_id"    json:"lock_buyer_id,omitempty"`
 	LockExpiresAt   *time.Time    `db:"lock_expires_at"  json:"lock_expires_at,omitempty"`

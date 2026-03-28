@@ -2158,6 +2158,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "requires_pin": {
+                    "type": "boolean"
+                },
                 "slug": {
                     "type": "string"
                 },
@@ -2363,6 +2366,9 @@ const docTemplate = `{
                 "discount_pct": {
                     "type": "number"
                 },
+                "expiry_date": {
+                    "type": "string"
+                },
                 "face_value": {
                     "type": "number"
                 },
@@ -2379,6 +2385,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "lock_expires_at": {
+                    "type": "string"
+                },
+                "pin_encrypted": {
                     "type": "string"
                 },
                 "seller_id": {
@@ -2708,6 +2717,7 @@ const docTemplate = `{
             "required": [
                 "brand_id",
                 "card_code",
+                "expiry_date",
                 "face_value"
             ],
             "properties": {
@@ -2724,9 +2734,17 @@ const docTemplate = `{
                     "minLength": 4,
                     "example": "AMZN-XXXX-XXXX-XXXX"
                 },
+                "card_pin": {
+                    "type": "string",
+                    "example": "1234"
+                },
                 "custom_discount": {
                     "type": "number",
                     "example": 5
+                },
+                "expiry_date": {
+                    "type": "string",
+                    "example": "12/26"
                 },
                 "face_value": {
                     "type": "number",

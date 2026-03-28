@@ -34,6 +34,8 @@ definitions:
         type: string
       name:
         type: string
+      requires_pin:
+        type: boolean
       slug:
         type: string
       status:
@@ -178,6 +180,8 @@ definitions:
         type: string
       discount_pct:
         type: number
+      expiry_date:
+        type: string
       face_value:
         type: number
       gate1_at:
@@ -189,6 +193,8 @@ definitions:
       lock_buyer_id:
         type: string
       lock_expires_at:
+        type: string
+      pin_encrypted:
         type: string
       seller_id:
         type: string
@@ -428,15 +434,22 @@ definitions:
         example: AMZN-XXXX-XXXX-XXXX
         minLength: 4
         type: string
+      card_pin:
+        example: "1234"
+        type: string
       custom_discount:
         example: 5
         type: number
+      expiry_date:
+        example: 12/26
+        type: string
       face_value:
         example: 1000
         type: number
     required:
     - brand_id
     - card_code
+    - expiry_date
     - face_value
     type: object
   src_delivery_http_handler.initiateBuyBody:

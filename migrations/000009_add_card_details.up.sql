@@ -1,0 +1,6 @@
+ALTER TABLE listings
+    ADD COLUMN IF NOT EXISTS expiry_date    VARCHAR(10)  NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS pin_encrypted  TEXT         NOT NULL DEFAULT '';
+
+ALTER TABLE brands
+    ADD COLUMN IF NOT EXISTS requires_pin BOOLEAN NOT NULL DEFAULT false;

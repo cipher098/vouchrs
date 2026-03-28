@@ -22,8 +22,9 @@ type Brand struct {
 	Color              string      `db:"color"               json:"color"`
 	VerificationSource string      `db:"verification_source" json:"verification_source"`
 	Status             BrandStatus `db:"status"              json:"status"`
+	RequiresPin bool      `db:"requires_pin" json:"requires_pin"`
 	// ListingCount is populated by ListWithCount — not a DB column.
-	ListingCount int       `db:"-"          json:"listing_count,omitempty"`
+	ListingCount int      `db:"-"            json:"listing_count,omitempty"`
 	CreatedAt    time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
 }

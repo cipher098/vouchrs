@@ -85,6 +85,9 @@ func (s *Service) CreateListing(ctx context.Context, sellerID uuid.UUID, input p
 	if brand.Status != entity.BrandStatusActive {
 		return nil, apperror.New(apperror.ErrBadRequest, fmt.Sprintf("brand %q is not currently accepting listings", brand.Name))
 	}
+	if brand.RequiresPin && input.CardPin == "" {
+		return nil, apperror.New(apperror.ErrBadRequest, fmt.Sprintf("brand %q requires a card PIN", brand.Name))
+	}
 
 	// 4. Duplicate check via code hash
 	codeHash := s.cipher.Hash(input.CardCode)
@@ -113,10 +116,17 @@ func (s *Service) CreateListing(ctx context.Context, sellerID uuid.UUID, input p
 		return nil, apperror.New(apperror.ErrVerificationFailed, result.FailReason)
 	}
 
-	// 6. Encrypt card code
+	// 6. Encrypt card code (and PIN if provided)
 	encrypted, err := s.cipher.Encrypt(input.CardCode)
 	if err != nil {
 		return nil, fmt.Errorf("encrypt card code: %w", err)
+	}
+	var pinEncrypted string
+	if input.CardPin != "" {
+		pinEncrypted, err = s.cipher.Encrypt(input.CardPin)
+		if err != nil {
+			return nil, fmt.Errorf("encrypt card pin: %w", err)
+		}
 	}
 
 	// 7. Calculate pricing
@@ -132,8 +142,10 @@ func (s *Service) CreateListing(ctx context.Context, sellerID uuid.UUID, input p
 		SellerPayout:    sellerPayout,
 		DiscountPct:     discountPct,
 		IsPool:          input.AcceptPool,
+		ExpiryDate:      input.ExpiryDate,
 		CodeEncrypted:   encrypted,
 		CodeHash:        codeHash,
+		PinEncrypted:    pinEncrypted,
 		Status:          entity.ListingStatusLive,
 		Gate1At:         &now,
 		VerifiedBalance: result.Balance,

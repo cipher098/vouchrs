@@ -32,10 +32,12 @@ type AuthService interface {
 // --- Listing ---
 
 type CreateListingInput struct {
-	BrandID    uuid.UUID
-	FaceValue  float64
-	CardCode   string // plaintext — will be encrypted
-	AcceptPool bool   // true = Vouchrs pool at recommended price
+	BrandID        uuid.UUID
+	FaceValue      float64
+	CardCode       string   // plaintext — will be encrypted
+	ExpiryDate     string   // MM/YY or MM/YYYY as printed on card
+	CardPin        string   // plaintext — will be encrypted; empty if brand doesn't require PIN
+	AcceptPool     bool     // true = Vouchrs pool at recommended price
 	CustomDiscount *float64 // used when AcceptPool=false
 }
 

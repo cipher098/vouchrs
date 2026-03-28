@@ -27,6 +27,8 @@ type createListingBody struct {
 	BrandID        string   `json:"brand_id"              validate:"required,uuid"  example:"550e8400-e29b-41d4-a716-446655440000"`
 	FaceValue      float64  `json:"face_value"            validate:"required,gt=0"  example:"1000"`
 	CardCode       string   `json:"card_code"             validate:"required,min=4" example:"AMZN-XXXX-XXXX-XXXX"`
+	ExpiryDate     string   `json:"expiry_date"           validate:"required"       example:"12/26"`
+	CardPin        string   `json:"card_pin,omitempty"                              example:"1234"`
 	AcceptPool     bool     `json:"accept_pool"                                     example:"true"`
 	CustomDiscount *float64 `json:"custom_discount,omitempty"                       example:"5"`
 }
@@ -69,6 +71,8 @@ func (h *ListingHandler) Create(w http.ResponseWriter, r *http.Request) {
 		BrandID:        brandID,
 		FaceValue:      body.FaceValue,
 		CardCode:       body.CardCode,
+		ExpiryDate:     body.ExpiryDate,
+		CardPin:        body.CardPin,
 		AcceptPool:     body.AcceptPool,
 		CustomDiscount: body.CustomDiscount,
 	})
