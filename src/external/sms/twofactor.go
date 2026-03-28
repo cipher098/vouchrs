@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gothi/vouchrs/src/internal/domain/port"
@@ -31,9 +32,14 @@ func NewTwoFactor(apiKey string) port.SMSService {
 	}
 }
 
+// normalizePhone strips the leading '+' so 2factor.in receives e.g. "919876543210".
+func normalizePhone(phone string) string {
+	return strings.TrimPrefix(phone, "+")
+}
+
 // SendOTP calls the AUTOGEN endpoint and returns the session ID.
 func (c *twoFactorClient) SendOTP(ctx context.Context, phone string) (string, error) {
-	url := fmt.Sprintf("%s/%s/SMS/%s/AUTOGEN", twoFactorBaseURL, c.apiKey, phone)
+	url := fmt.Sprintf("%s/%s/SMS/%s/AUTOGEN", twoFactorBaseURL, c.apiKey, normalizePhone(phone))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", fmt.Errorf("build 2factor request: %w", err)
