@@ -76,7 +76,7 @@ func (h *AuthHandler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, apperror.New(apperror.ErrBadRequest, err.Error()))
 		return
 	}
-	if err := h.auth.RequestOTP(r.Context(), body.Contact); err != nil {
+	if err := h.auth.RequestOTP(r.Context(), body.Contact, r.RemoteAddr); err != nil {
 		response.Error(w, err)
 		return
 	}

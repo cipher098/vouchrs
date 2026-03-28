@@ -17,9 +17,12 @@ import (
 )
 
 const (
-	otpTTL          = 10 * time.Minute
-	maxOTPAttempts  = 5
+	otpTTL            = 10 * time.Minute
+	otpCooldown       = 60 * time.Second
+	maxOTPAttempts    = 5
 	otpAttemptsWindow = 15 * time.Minute
+	maxOTPPerIPPerHr  = 10
+	otpIPWindow       = 1 * time.Hour
 )
 
 type Service struct {
@@ -62,14 +65,31 @@ func NewService(
 }
 
 // RequestOTP generates and sends an OTP. contact is phone number or email.
-func (s *Service) RequestOTP(ctx context.Context, contact string) error {
-	// Rate-limit: block after maxOTPAttempts within the window
+// clientIP is used for per-IP rate limiting (pass r.RemoteAddr).
+func (s *Service) RequestOTP(ctx context.Context, contact, clientIP string) error {
+	// 1. Per-contact cooldown: block rapid resend (costs money per SMS).
+	cooldownKey := "otp_cooldown:" + contact
+	if exists, _ := s.cache.Exists(ctx, cooldownKey); exists {
+		return apperror.ErrOTPCooldown
+	}
+
+	// 2. Per-contact attempt cap: block after maxOTPAttempts within the window.
 	attemptsKey := "otp_attempts:" + contact
 	var attempts int
-	if err := s.cache.Get(ctx, attemptsKey, &attempts); err == nil {
-		if attempts >= maxOTPAttempts {
-			return apperror.ErrOTPTooManyAttempts
+	_ = s.cache.Get(ctx, attemptsKey, &attempts)
+	if attempts >= maxOTPAttempts {
+		return apperror.ErrOTPTooManyAttempts
+	}
+
+	// 3. Per-IP hourly cap: prevent abusing many different numbers from one IP.
+	if clientIP != "" {
+		ipKey := "otp_ip:" + clientIP
+		var ipCount int
+		_ = s.cache.Get(ctx, ipKey, &ipCount)
+		if ipCount >= maxOTPPerIPPerHr {
+			return apperror.ErrOTPIPLimit
 		}
+		_ = s.cache.Set(ctx, ipKey, ipCount+1, otpIPWindow)
 	}
 
 	otp, err := generateOTP(s.otpLen)
@@ -81,7 +101,8 @@ func (s *Service) RequestOTP(ctx context.Context, contact string) error {
 		return fmt.Errorf("store otp: %w", err)
 	}
 
-	// Increment attempt counter
+	// Set cooldown and increment attempt counter only after OTP is stored.
+	_ = s.cache.Set(ctx, cooldownKey, 1, otpCooldown)
 	_ = s.cache.Set(ctx, attemptsKey, attempts+1, otpAttemptsWindow)
 
 	if s.otpDevMode {

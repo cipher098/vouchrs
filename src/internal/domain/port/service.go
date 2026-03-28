@@ -17,7 +17,8 @@ type AuthTokenPair struct {
 
 type AuthService interface {
 	// RequestOTP sends a 6-digit OTP to phone (SMS) or email.
-	RequestOTP(ctx context.Context, contact string) error
+	// clientIP is used for per-IP rate limiting.
+	RequestOTP(ctx context.Context, contact, clientIP string) error
 	// VerifyOTP validates the OTP and returns JWT tokens. Creates user on first login.
 	VerifyOTP(ctx context.Context, contact, otp string) (*AuthTokenPair, *entity.User, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*AuthTokenPair, error)
